@@ -44,9 +44,14 @@ game.addEventListener('move', function(e) {
    if (player.hasWon()) e.preventDefault();//blocks nextPlayer event
 });
 ```
-If you, [for some inexplicable reason][invalid], want your HTML to validate, then you can do this:
-```trigger._.attr = 'data-trigger'```
-```<button data-trigger="foo">Foo!</button>```
+If you, for some strange reason, care about "valid HTML", then you can do this:  
+```javascript
+trigger._.attr = 'data-trigger';
+```
+```html
+<button data-trigger="foo">Foo!</button>
+```
+But personally, [I don't recommend it][invalid].
 
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
 
