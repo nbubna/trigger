@@ -1,4 +1,4 @@
-Rich, declarative custom events for your page controls!
+The easiest way to use rich, declarative custom events and clean up your event handling!
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -10,19 +10,28 @@ Bower: ```bower install trigger```
 
 
 ## Documentation
-Rich, declarative events for the DOM! Add a ```trigger="foo"``` to an element, when the
+It's pretty simple; you add a ```trigger="foo""``` to an element, when the
 user "pulls it" (click or Enter keyup, as appropriate), your custom event
-will fire automatically.
+will fire automatically. You no longer have to manually translate clicks and
+keyups in your app code. Your HTML becomes more readable and so does your javascript.
 
-Doing ```trigger="foo bar"``` will trigger the "foo" and "bar" events in sequence. Your list
-of events can be as long as you like. To stop the sequence, catch an event in it and
-call ```event.preventDefault()``` or return false to prevent the rest of the events in the
-list from happening.
+If that's not enough, doing ```trigger="validate save"``` will trigger the "validate" and "save"
+events in sequence. Your list of events can be as long as you like. To stop the sequence,
+catch an event in it and call ```event.preventDefault()``` or ```return false;``` 
+to prevent the rest of the events in the list from happening.
 
-You can add "tags" to an event ```trigger="yell#once#loud"```,
-namespaces ```trigger="yell.player"```, data ```trigger="yell['howdy!']"```,
-or ugly combinations of the three ```trigger="yell.player['howdy!']#loud"```.
-And yes, you must put them in namespaces, data, tags order.
+But wait, there's more! You probably want to distinguish your battleship's "explode" event from a mere
+missile's "explode". Just add a namespace like so: ```trigger="explode.ship"```.
+Your explosion listener can check the ```event.namespace``` property.
+
+Or perhaps you want to throw in a little contextual data: ```trigger="addTax['CA']"```
+As you guessed, it gets JSON parsed and stuck at ```event.data```.
+
+You can even add simple tags to your events: ```trigger="yell#once#loud"```
+(see ```event.tags``` and each ```event[tag]```).
+
+Be warned, if you feel crazy enough to use awful (but rich and declarative) combinations of all three:
+```trigger="yell.player['howdy!']#loud"```, then you ***must*** put them in that namespaces, data, tags order.
 
 ## Examples
 ```html
