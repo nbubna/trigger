@@ -1,4 +1,4 @@
-### Get rich, declarative custom events!
+### Rich, custom, declarative events!
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -9,54 +9,66 @@ Bower: ```bower install trigger```
 [npm]: https://npmjs.org/package/trigger
 
 ### Problem: Meaningless Events
-You may not realize it yet, but events like 'click' and 'keyup' are meaningless for webapp developers!
-Yes, they have important meaning for browsers and UI libraries,
-but what application code actually needs to know is when a particular event means
-(e.g. 'save', 'delete', 'doNext', etc).  They don't usually even care whether
-the event was a click or if the user pressed 'Enter'.
-Browser are insightful enough to translate some Enter presses into click events,
-but even so, typing ```$('#save').on('click', fn)``` is
-cluttering your javascript with browser implementation details and making it
-harder to test as well.
+You may have noticed that events like 'click' and 'keyup' are meaningless in regards
+to your application's code, but i bet you still register listeners for them.
+What application code actually needs to know is when a particular event means
+(e.g. 'save', 'delete', 'doNext', etc). Cluttering your javascript with browser
+implementation terms like 'click' only make your code less readable and harder
+to test.  Your javascript should ideally only be registering listeners for 
+events that are meaningful (i.e. custom) to your application.
 
 ### Solution: Declarative Application Events
 Add a ```click="foo"``` attribute to any element,
 when the user "clicks" it (click or Enter keyup, as appropriate),
-trigger.js will ensure that your custom event will fire automatically.
+trigger.js will automatically fire your custom event.
+Your javascript never needs to listen for a click event again.
 
+If translating "click" events is not enough for you,
+you can tell trigger.js to translate other native events as well:  
+ ```javascript
+ trigger.translate('mouseenter');
+ ```
+ ```html
+ <div mouseenter="activate">...</div>
+ ```
+
+### Problem: Dependent Events
+Sometimes a single "click" should trigger a sequence of events. This can be handled
+by registering multiple event listeners in careful order and using tricks like
+jQuery's ```e.stopImmediatePropogation();``` or simply triggering the next event at
+the completion of the previous one. But this can be a fragile, complicated process
+and is far from declarative and readable.
+
+### Solution: Declarative Event Sequences
 Doing ```click="validate save"``` will trigger the "validate" and "save" events in sequence.
 Your list of events can be as long as you like. To stop the sequence, catch an event in it
 and call ```event.preventDefault()``` to cancel the rest of the sequence.
 
-If "click" (or click-like) events are not enough for you, you can tell trigger.js to translate
-other native events as well:  
- ```<div mouseenter="activate">...</div>``` ```trigger.translate('mouseenter');```
-
-Now your app can use events that are meaningfully descriptive or instructive,
-and not waste energy handling browser implementation events.
-
 ### Problem: Simplistic Events
-Once your events are meaningful, you may realize that your code is only declaring
+Once you've achieved app-specific events, you may realize that your code is only declaring
 events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
 glean information from the context or target element to decipher the full meaning of the event.
 Sometimes that simplicity is good, but sometimes it is a real problem.
 
 ### Solution: Rich Events
-trigger.js provides a declarative syntax for grammatically rich events, not merely
-custom event types (usually verbs).
-This keeps your event listeners simpler and your HTML self-documenting.
+trigger.js provides a declarative syntax for grammatically rich events, 
+for better self-documentation in your javascript and HTML,
+as well as simpler event listeners.
 
+#### event.category
 When you need to distinguish your player's "move" event from that of a different feature,
 prefix your event with a category (subject/noun): ```click="player:move"```.
 Any app-wide 'move' listener can read it from the ```event.category``` property.
 
+#### event.data
 To include contextual data (object/noun) for your event, do: ```click="view['start']"```
 The data gets the JSON.parse() treatment (after some quote massaging) and is set at ```event.data```
 (always in an array, thus the brackets);
 
+#### event.tags
 Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
 ```click="move#up#left"``` and listen for these at ```event.tags``` and each ```event[tag]```
-(always true when not undefined).
+(the individual tags are always given a value of ```true```).
 
 NOTE: should you have cause to use combinations of all three (probably rare),
 then you ***must*** put them in this order:
@@ -72,7 +84,7 @@ the end of the success callback for your async business.  But this means your ni
 declarative ```<button click="validate save">Save</button>``` element becomes a
 confusing ```<button click="validate">Save</button>```. Not so cool.
 
-### Solution: Promise-Friendly Event Sequences
+### Solution: ```event.promise(promise)```
 It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
 on the event: ```event.promise(my_jqxhr);```. This automatically cancels the event
 sequence and restarts it at the next event once the promise is fulfilled. Now you
