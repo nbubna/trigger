@@ -68,16 +68,16 @@
     };
     function create(trigger, element, type) {
         if (!element){ element = 'button'; }
-        if (!type){ type = 'click'; }
         trigger = trigger.replace(/"/g, "'");
         var html = '<'+element+' '+_.prefix+type+'="'+trigger+'">'+trigger+'</'+element+'>',
             $el = $(html).appendTo($(document.body));
         strictEqual($(element+'['+_.prefix+type+'="'+trigger+'"]').length, 1, 'failed to create element');
         return $el;
     }
-    function triggerElement(trigger, element, save) {
-        var $el = create(trigger, element);
-        window.trigger($el[0]);
+    function triggerElement(trigger, element, type, save) {
+        if (!type){ type = 'click'; }
+        var $el = create(trigger, element, type);
+        window.trigger($el[0], _.attr($el[0], type));
         return save ? $el : $el.remove();
     }
 
@@ -145,7 +145,7 @@
                     promise.resolve();
                 }, 100);
             });
-            var $el = triggerFn('async '+after, null, true);
+            var $el = triggerFn('async '+after, null, null, true);// extra params for triggerElement
         });
     }
     function suite(moduleName, triggerFn, fnExpects, thorough) {
@@ -159,20 +159,18 @@
     
     module('api');
     test('user', function() {
-        expect(1, 'user api changed, bump major version');
-        ok(trigger, 'no trigger()');
+        ok(trigger, 'no trigger(), not backward compatible');
         //TODO: test event api
     });
     test('developer', function() {
-        expect(21, 'developer api changed, bump minor version');
         ok(_, 'no _ object');
-        var props = 'version prefix splitRE noClickRE noEnterRE buttonRE boxRE'.split(' ');
+        var props = 'version prefix splitRE noClickRE noEnterRE buttonRE boxRE special'.split(' ');
         for (var i=0,m=props.length; i<m; i++) {
-            ok(props[i] in _, 'missing property "'+props[i]+'"');
+            ok(props[i] in _, 'missing property "'+props[i]+'", not backward compatible');
         }
-        var fns = 'all parse event preventDefault listen find attr click keyup on translate prop'.split(' ');
+        var fns = 'all parse event preventDefault listen find attr on manual translate prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
-            ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'"');
+            ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'", not backward compatible');
         }
     });
 

@@ -6,7 +6,7 @@
  */
 ;(function(window, document) {
     // user api
-    function trigger(){ return _.main.apply(this, arguments); }
+    function trigger(){ return _.manual.apply(this, arguments); }
     trigger.translate = function(){ return _.translate.apply(this, arguments); };
     // developer api
     var _ = trigger._ = {
@@ -86,57 +86,59 @@
         },
         // native DOM and event stuff
         listen: function(e) {
-            var el = e.target,
-                getValidType = _[e.type],
-                type = (!getValidType && e.type) || getValidType(e, el, el.nodeName.toLowerCase()); 
-            if (type && (el = _.find(el, type))) {
-                _.all(el, _.attr(el, type), e);
-                _.preventDefault(e, !_.boxRE.test(el.type));
+            var el = e.target, attr,
+                type = e.type,
+                special = _.special[type+(e.which || e.keyCode || '')];
+            if (special) {
+                type = special(e, el, el.nodeName.toLowerCase());
+                if (!type){ return; }// special said to ignore it!
+            }
+            el = _.find(el, type),
+            attr = _.attr(el, type);
+            if (attr) {
+                _.all(el, attr, e);
+                if (type === 'click') {// almost always prevent default for clicks
+                    _.preventDefault(e, !_.boxRE.test(el.type));
+                }
             }
         },
         on: function(type, fn) {
-            //TODO? use jQuery to listen to faked or non-bubbling native events?
-            if (document.addEventListener) {
-                document.addEventListener(type, fn);
-            } else {
-                document.attachEvent('on'+type, function(){ fn(window.event); });
-            }
+            if (jQuery && jQuery.event){ jQuery(document).on(type, fn); }// use it if you've got it
+            else if (document.addEventListener){ document.addEventListener(type, fn); }
+            else { document.attachEvent('on'+type, function(){ fn(window.event); }); }
+        },
+        attr: function(el, type) {
+            return el && el.getAttribute && el.getAttribute(_.prefix+type);
         },
         find: function(el, type) {
             return !el || _.attr(el, type) ? el : _.find(el.parentNode, type);
         },
-        attr: function(el, type) {
-            return el.getAttribute(_.prefix+type);
-        },
-        // event validators 
-        click: function(e, el, name) {// ignore clicks on editable fields (focusing clicks)
-            return (!el.isContentEditable && !_.noClickRE.test(name) &&
-                    (name !== 'input' || _.buttonRE.test(el.type))) &&
-                   'click';
-        },
-        keyup: function(e, el, name) {// ignore Enters that already have meaning (button, link, textarea)
-            return (13 === (e.keyCode || e.which) &&
-                    !el.isContentEditable && !_.noEnterRE.test(name) &&
-                    !(name === 'a' && el.getAttribute('href')) &&
-                    !(_.buttonRE.test(el.type))) &&
-                    'click';
+        // special event handlers
+        special: {
+            click: function(e, el, name) {// if click attr or not editable (i.e. not focusing click)
+                return (_.attr(el, e.type) || 
+                        (!el.isContentEditable && !_.noClickRE.test(name) &&
+                         (name !== 'input' || _.buttonRE.test(el.type)))) &&
+                       'click';
+            },
+            keyup13: function(e, el, name) {// if fitting attr or not already accessible (i.e. enter !== click)
+                return (_.attr(el, 'key-enter') && 'key-enter') ||// enter sometimes fits better than click
+                       (_.attr(el, e.type) && e.type) ||// return keyup type
+                       (!el.isContentEditable && !_.noEnterRE.test(name) &&
+                        !(name === 'a' && el.getAttribute('href')) && _.buttonRE.test(el.type)) &&
+                       'click';// convert to a click
+            }
         },
         // extension hooks
-        main: function(el, events) {
-            if (!el || typeof el === "string") {
-                events = el;
-                el = this === window ? document : this;
-            } else if (!events) {// only shortcut for click=
-                el = _.find(el, 'click');
-                events = _.attr(el, 'click');
-            }
-            return _.all(el, events);
+        manual: function(el, events) {
+            if (typeof el === "string"){ events = el; el = document; }
+            return _.all(el, events || _.attr(el, 'click') || '');
         },
         translate: function() {
             for (var i=0,m=arguments.length; i<m; i++){ _.on(arguments[i], _.listen); }
         },
         prop: function(prop) {// by default support jQuery's event system
-            if (jQuery && !_.prop[prop]) {
+            if (jQuery && jQuery.event && !_.prop[prop]) {
                 _.prop[prop] = true;
                 jQuery.event.props.push(prop);
             }
