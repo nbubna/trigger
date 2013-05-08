@@ -1,8 +1,8 @@
 {
   "name": "trigger",
   "description": "Better localStorage",
-  "keywords": ["events","custom","declarative","trigger","namespace","DOM"],
-  "version": "0.9.0",
+  "keywords": ["events","custom","declarative","trigger","rich","namespace","DOM"],
+  "version": "1.0.0",
   "author": {
     "name": "Nathan Bubna",
     "email": "nathan@esha.com",

@@ -1,6 +1,6 @@
 {
   "name": "trigger",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "main": "src/trigger.js",
   "ignore": [
     "**/.*",

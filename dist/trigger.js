@@ -1,41 +1,53 @@
-/*! trigger - v0.9.0 - 2013-05-03
+/*! trigger - v1.0.0 - 2013-05-07
 * Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
 ;(function(window, document) {
 
     var _ = {
-        version: "0.9.0",
+        version: "1.0.0",
         all: function(target, events, oe) {
-            events = events.split(' ');
-            for (var i=0, m=events.length, e = oe; i<m && _.allowDefault(e); i++) {
+            events = events.split(_.splitRE);
+            for (var i=0, m=events.length, e = oe; i<m && !_.stop(e); i++) {
                 var props = _.parse(events[i]);
                 if (props) {
-                    props.triggers = events;
+                    if (m > 1) {
+                        props.triggers = events;
+                        props.promise = _.promise(target, events, i, e);
+                    }
+                    if (i > 0) {
+                        props.previousEvent = e;
+                    }
                     props.originalEvent = oe;
                     e = _.event(target, props);
                 }
             }
             return e;
         },
+        promise: function(target, events, i, e) {
+            return function(promise) {
+                _.stop(e, true);
+                promise.then(function() {
+                    _.all(target, events.slice(i+1).join(' '), e.originalEvent);
+                });
+            };
+        },
         parse: function(type) {
             if (!type){ return; }
             var e = { trigger: type },
-                dot = type.indexOf('.'),
-                pound = type.indexOf('#'),
-                bracket = type.indexOf('[');
-            if (pound > 0) {
+                colon, pound, bracket;
+            if ((pound = type.indexOf('#', type.indexOf(']'))) > 0) {
                 e.tags = type.substring(pound+1).split('#');
                 type = type.substring(0, pound);
                 for (var i=0,m=e.tags.length; i<m; i++) {
                     e[e.tags[i]] = true;
                 }
             }
-            if (bracket > 0) {
+            if ((bracket = type.indexOf('[')) > 0) {
                 e.data = JSON.parse(type.substring(bracket).replace(/\'/g,'"'));
                 type = type.substring(0, bracket);
             }
-            if (dot > 0) {
-                e.namespace = type.substring(dot+1);
-                type = type.substring(0, dot);
+            if ((colon = type.indexOf(':')) > 0) {
+                e.category = type.substring(0, colon);
+                type = type.substring(colon+1);
             }
             e.type = type;
             return e;
@@ -44,32 +56,27 @@
             var e = document.createEvent('HTMLEvents');
             e.initEvent(props.type, true, true);
             for (var prop in props) {
-                if (props.hasOwnProperty(prop)) {
-                    e[prop] = props[prop];
-                }
+                _.prop(prop);// allow jQuery or others to learn of custom properties
+                e[prop] = props[prop];
             }
             target.dispatchEvent(e);
             return e;
         },
-        allowDefault: function(e, allowed) {
-            if (!e){ return true; }
-            if (arguments.length === 1) {
-                return !e.defaultPrevented && e.returnValue !== false;
-            }
-            if (!allowed) {
+        stop: function(e, stop) {
+            if (e && stop) {
                 if (e.preventDefault) {
                     e.preventDefault();
                 } else {
                     e.returnValue = false;
                 }
             }
-            return allowed;
+            return e && (e.defaultPrevented || e.returnValue === false);
         },
         listen: function(e) {
             var el = e.target;
             if (_[e.type](e, el, el.nodeName.toLowerCase()) && (el = _.find(el))) {
-                _.all(el, el.getAttribute(_.attr), null, e);
-                return _.allowDefault(e, _.boxRE.test(el.type));
+                _.all(el, el.getAttribute(_.attr), e);
+                return !_.stop(e, !_.boxRE.test(el.type));
             }
         },
         find: function(el) {
@@ -86,6 +93,7 @@
                    !(_.buttonRE.test(el.type));
         },
         attr: 'trigger',
+        splitRE: / (?![^\[\]]*\])+/g,
         noClickRE: /^(select|textarea)$/,
         noEnterRE: /^(textarea|button)$/,
         buttonRE: /^(submit|button|reset)$/,
@@ -101,12 +109,25 @@
         init: function() {
             _.on('click', _.listen);
             _.on('keyup', _.listen);
+        },
+        prop: function(prop) {// by default support jQuery's event system
+            if (jQuery && !_.prop[prop]) {
+                _.prop[prop] = true;
+                jQuery.event.props.push(prop);
+            }
         }
     };
 
-    // expose this to the environment
-    function trigger(events) {
-        return _.all(this === window ? document : this, events);
+    // expose API for extension, testing, and other direct use
+    function trigger(el, events) {
+        if (!el || typeof el === "string") {
+            events = el;
+            el = this === window ? document : this;
+        } else if (!events) {
+            el = _.find(el);
+            events = el.getAttribute(_.attr);
+        }
+        return _.all(el, events);
     }
     trigger._ = _;
     if (typeof module !== 'undefined' && module.exports) {
