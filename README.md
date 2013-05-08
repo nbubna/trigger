@@ -90,8 +90,7 @@ on the event: ```event.promise(my_jqxhr);```. This automatically cancels the eve
 sequence and restarts it at the next event once the promise is fulfilled. Now you
 can have your straightforward ```click="validate save"``` button back! Very cool.
 
-NOTE: Only events with subsequent events are given this ability.
-Also, such events will only listen to a single promise. To enforce this and provide
+NOTE: Events will only listen to a single promise. To enforce this and provide
 access to the promise, the ```event.promise()``` function replaces itself with the
 promise you give it.
 
