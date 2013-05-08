@@ -1,27 +1,7 @@
 (function($) {
-    /*
-    ======== A Handy Little QUnit Reference ========
-    http://api.qunitjs.com/
-
-    Test methods:
-      module(name, {[setup][ ,teardown]})
-      test(name, callback)
-      expect(numberOfAssertions)
-      stop(increment)
-      start(decrement)
-    Test assertions:
-      ok(value, [message])
-      equal(actual, expected, [message])
-      notEqual(actual, expected, [message])
-      deepEqual(actual, expected, [message])
-      notDeepEqual(actual, expected, [message])
-      strictEqual(actual, expected, [message])
-      notStrictEqual(actual, expected, [message])
-      throws(block, [expected], [message])
-    */
 
     var trigger = window.trigger,
-      _ = trigger._;
+        _ = trigger._;
 
     function on(type, listener) {
         _.on(type, listener);
@@ -33,7 +13,6 @@
             document.detachEvent('on'+type, listener);
         }
     }
-
     function silence(type) {
         var fail = function() {
             ok(false, 'There should not have been a "'+type+'" event.');
@@ -42,11 +21,9 @@
         on(type, fail);
         return fail;
     }
-
     function endSilence(type, fail) {
         off(type, fail);
     }
-
     function listenFor(type, category, data, tags, fn) {
         var listener = function(e) {
             off(type, listener);
@@ -71,7 +48,6 @@
         };
         on(type, listener);
     }
-
     function Promise(){}
     Promise.prototype = {
         fn: [],
@@ -90,57 +66,57 @@
             }
         }
     };
-
-    function create(trigger, element) {
+    function create(trigger, element, type) {
         if (!element){ element = 'button'; }
+        if (!type){ type = 'click'; }
         trigger = trigger.replace(/"/g, "'");
-        var html = '<'+element+' '+_.attr+'="'+trigger+'">'+trigger+'</'+element+'>',
+        var html = '<'+element+' '+_.prefix+type+'="'+trigger+'">'+trigger+'</'+element+'>',
             $el = $(html).appendTo($(document.body));
-        strictEqual($(element+'['+_.attr+'="'+trigger+'"]').length, 1, 'failed to create element');
+        strictEqual($(element+'['+_.prefix+type+'="'+trigger+'"]').length, 1, 'failed to create element');
         return $el;
     }
-
     function triggerElement(trigger, element, save) {
         var $el = create(trigger, element);
         window.trigger($el[0]);
         return save ? $el : $el.remove();
     }
 
-    function suite(moduleName, triggerFn, fnExpects, thorough) {
-        module(moduleName);
-        test('single event', function() {
+    function basics(triggerFn, fnExpects) {
+        test('event', function() {
             expect(2+fnExpects);
             listenFor('single');
             triggerFn('single');
         });
-        if (thorough !== false) {
-            test('two events', function() {
-                expect(4+fnExpects);
-                listenFor('one');
-                listenFor('two');
-                triggerFn('one two');
-            });
-            test('categorized event', function() {
-                expect(3+fnExpects);
-                listenFor('categorized', 'category');
-                triggerFn('category:categorized');
-            });
-            test('event with data', function() {
-                expect(3+fnExpects);
-                listenFor('data', null, [1,true,'a','b.c',{d:'#'}, [[{}]]]);
-                triggerFn('data[1,true,"a",'+"'b.c',"+'{"d":"#"},[[{}]]]');
-            });
-            test('tagged event', function() {
-                expect(5+fnExpects);
-                listenFor('tagged', null, null, 'tag1 tag2');
-                triggerFn('tagged#tag1#tag2');
-            });
-            test('everything', function() {
-                expect(6+fnExpects);
-                listenFor('everything', 'category', ['data'], 'tag');
-                triggerFn("category:everything['data']#tag");
-            });
-        }
+        test('sequence', function() {
+            expect(4+fnExpects);
+            listenFor('one');
+            listenFor('two');
+            triggerFn('one two');
+        });
+    }
+    function properties(triggerFn, fnExpects) {
+        test('categorized event', function() {
+            expect(3+fnExpects);
+            listenFor('categorized', 'category');
+            triggerFn('category:categorized');
+        });
+        test('event with data', function() {
+            expect(3+fnExpects);
+            listenFor('data', null, [1,true,'a','b.c',{d:'#'}, [[{}]]]);
+            triggerFn('data[1,true,"a",'+"'b.c',"+'{"d":"#"},[[{}]]]');
+        });
+        test('tagged event', function() {
+            expect(5+fnExpects);
+            listenFor('tagged', null, null, 'tag1 tag2');
+            triggerFn('tagged#tag1#tag2');
+        });
+        test('everything', function() {
+            expect(6+fnExpects);
+            listenFor('everything', 'category', ['data'], 'tag');
+            triggerFn("category:everything['data']#tag");
+        });
+    }
+    function controls(triggerFn, fnExpects, key) {
         test('cancel event', function() {
             expect(2+fnExpects);
             listenFor('pass', null, null, null, function(e){ e.preventDefault(); });
@@ -148,11 +124,10 @@
             triggerFn('pass fail');
             endSilence('fail', listener);
         });
-
         asyncTest('event.promise()', function() {
             expect(6+fnExpects);
             var resolved = false,
-                after = 'after'+moduleName.replace(/ /g,'_'),
+                after = 'after'+(key || Math.random()),
                 listener = silence('after');
             listenFor('async', null, null, null, function(e) {
                 var promise = new Promise();
@@ -168,10 +143,18 @@
                         }
                     });
                     promise.resolve();
-                }, 1000);
+                }, 100);
             });
             var $el = triggerFn('async '+after, null, true);
         });
+    }
+    function suite(moduleName, triggerFn, fnExpects, thorough) {
+        module(moduleName);
+        basics(triggerFn, fnExpects);
+        if (thorough === false) {
+            properties(triggerFn, fnExpects);
+            controls(triggerFn, fnExpects, moduleName.replace(/ /g, '_'));
+        }
     }
     
     module('api');
@@ -181,13 +164,13 @@
         //TODO: test event api
     });
     test('developer', function() {
-        expect(20, 'developer api changed, bump minor version');
+        expect(21, 'developer api changed, bump minor version');
         ok(_, 'no _ object');
-        var props = 'version attr splitRE noClickRE noEnterRE buttonRE boxRE'.split(' ');
+        var props = 'version prefix splitRE noClickRE noEnterRE buttonRE boxRE'.split(' ');
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in _, 'missing property "'+props[i]+'"');
         }
-        var fns = 'all parse event preventDefault listen find click keyup on init prop'.split(' ');
+        var fns = 'all parse event preventDefault listen find attr click keyup on translate prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
             ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'"');
         }
@@ -197,9 +180,9 @@
 
     suite('trigger(el,event)', triggerElement, 1);
 
-    _.attr = 'data-trigger';
+    _.prefix = 'data-';
     suite('data-trigger(el,event)', triggerElement, 1, false);
-    _.attr = 'trigger';
+    _.prefix = '';
 
     //suite('native trigger', triggerNative, 1);
 

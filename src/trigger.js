@@ -5,9 +5,19 @@
  *   http://www.gnu.org/licenses/gpl.html
  */
 ;(function(window, document) {
-
-    var _ = {
+    // user api
+    function trigger(){ return _.main.apply(this, arguments); }
+    trigger.translate = function(){ return _.translate.apply(this, arguments); };
+    // developer api
+    var _ = trigger._ = {
         version: "1.0.0",
+        prefix: '',
+        splitRE: / (?![^\[\]]*\])+/g,
+        noClickRE: /^(select|textarea)$/,
+        noEnterRE: /^(textarea|button)$/,
+        buttonRE: /^(submit|button|reset)$/,
+        boxRE: /^(checkbox|radio)$/,
+        // custom event stuff
         all: function(target, events, oe, e) {
             events = events.split(_.splitRE);
             for (var i=0, m=events.length; i<m && !_.preventDefault(e || oe); i++) {
@@ -74,43 +84,56 @@
             }
             (e || this).returnValue = false;// set on old IE native
         },
+        // native DOM and event stuff
         listen: function(e) {
-            var el = e.target;
-            if (_[e.type](e, el, el.nodeName.toLowerCase()) && (el = _.find(el))) {
-                _.all(el, el.getAttribute(_.attr), e);
+            var el = e.target,
+                getValidType = _[e.type],
+                type = (!getValidType && e.type) || getValidType(e, el, el.nodeName.toLowerCase()); 
+            if (type && (el = _.find(el, type))) {
+                _.all(el, _.attr(el, type), e);
                 _.preventDefault(e, !_.boxRE.test(el.type));
             }
         },
-        find: function(el) {
-            return !el || el.getAttribute(_.attr) ? el : _.find(el.parentNode);
-        },
-        click: function(e, el, name) {// ignore clicks on editable fields (focusing clicks)
-            return !el.isContentEditable && !_.noClickRE.test(name) &&
-                   (name !== 'input' || _.buttonRE.test(el.type));
-        },
-        keyup: function(e, el, name) {// ignore Enters that already have meaning (button, link, textarea)
-            return 13 === (e.keyCode || e.which) &&
-                   !el.isContentEditable && !_.noEnterRE.test(name) &&
-                   !(name === 'a' && el.getAttribute('href')) &&
-                   !(_.buttonRE.test(el.type));
-        },
-        attr: 'trigger',
-        splitRE: / (?![^\[\]]*\])+/g,
-        noClickRE: /^(select|textarea)$/,
-        noEnterRE: /^(textarea|button)$/,
-        buttonRE: /^(submit|button|reset)$/,
-        boxRE: /^(checkbox|radio)$/,
-
         on: function(type, fn) {
+            //TODO? use jQuery to listen to faked or non-bubbling native events?
             if (document.addEventListener) {
                 document.addEventListener(type, fn);
             } else {
                 document.attachEvent('on'+type, function(){ fn(window.event); });
             }
         },
-        init: function() {
-            _.on('click', _.listen);
-            _.on('keyup', _.listen);
+        find: function(el, type) {
+            return !el || _.attr(el, type) ? el : _.find(el.parentNode, type);
+        },
+        attr: function(el, type) {
+            return el.getAttribute(_.prefix+type);
+        },
+        // event validators 
+        click: function(e, el, name) {// ignore clicks on editable fields (focusing clicks)
+            return (!el.isContentEditable && !_.noClickRE.test(name) &&
+                    (name !== 'input' || _.buttonRE.test(el.type))) &&
+                   'click';
+        },
+        keyup: function(e, el, name) {// ignore Enters that already have meaning (button, link, textarea)
+            return (13 === (e.keyCode || e.which) &&
+                    !el.isContentEditable && !_.noEnterRE.test(name) &&
+                    !(name === 'a' && el.getAttribute('href')) &&
+                    !(_.buttonRE.test(el.type))) &&
+                    'click';
+        },
+        // extension hooks
+        main: function(el, events) {
+            if (!el || typeof el === "string") {
+                events = el;
+                el = this === window ? document : this;
+            } else if (!events) {// only shortcut for click=
+                el = _.find(el, 'click');
+                events = _.attr(el, 'click');
+            }
+            return _.all(el, events);
+        },
+        translate: function() {
+            for (var i=0,m=arguments.length; i<m; i++){ _.on(arguments[i], _.listen); }
         },
         prop: function(prop) {// by default support jQuery's event system
             if (jQuery && !_.prop[prop]) {
@@ -119,25 +142,11 @@
             }
         }
     };
-
-    // expose API for extension, testing, and other direct use
-    function trigger(el, events) {
-        if (!el || typeof el === "string") {
-            events = el;
-            el = this === window ? document : this;
-        } else if (!events) {
-            el = _.find(el);
-            events = el.getAttribute(_.attr);
-        }
-        return _.all(el, events);
-    }
-    trigger._ = _;
+    // connect to the outside world
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = trigger;
     } else {
         window.trigger = trigger;
     }
-    // wait to init, in case an extension wishes to modify it
-    window.onload = function(){ _.init(); };
-
+    trigger.translate('click', 'keyup');
 })(window, document);
