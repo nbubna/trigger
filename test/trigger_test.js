@@ -34,18 +34,23 @@
         }
     }
 
-    function expectSilence(type) {
+    function silence(type) {
         var fail = function() {
             ok(false, 'There should not have been a "'+type+'" event.');
             off(type, fail);
         };
         on(type, fail);
+        return fail;
+    }
+
+    function endSilence(type, fail) {
+        off(type, fail);
     }
 
     function listenFor(type, category, data, tags, fn) {
         var listener = function(e) {
             off(type, listener);
-            ok(e);
+            ok(e && e.type, "missing event or typeless event");
             strictEqual(e.type, type, 'should be '+type);
             if (category) {
                 strictEqual(e.category, category, 'should be '+category);
@@ -61,13 +66,30 @@
                 deepEqual(e.tags, tags, 'should have same tags');
             }
             if (fn) {
-                if (!fn.apply(this, arguments)) {
-                    _.stop(e, true);
-                }
+                return fn.apply(this, arguments);
             }
         };
         on(type, listener);
     }
+
+    function Promise(){}
+    Promise.prototype = {
+        fn: [],
+        then: function(fn) {
+            ok(fn, 'then(fn) must have a function argument');
+            this.fn.push(fn);
+            if ('resolution' in this) {
+                this.resolve(this.resolution);
+            }
+        },
+        resolve: function(val) {
+            this.resolution = val;
+            var fn;
+            while (fn = this.fn.pop()) {
+                fn(val);
+            }
+        }
+    };
 
     function create(trigger, element) {
         if (!element){ element = 'button'; }
@@ -78,13 +100,14 @@
         return $el;
     }
 
-    function triggerElement(trigger, element) {
+    function triggerElement(trigger, element, save) {
         var $el = create(trigger, element);
         window.trigger($el[0]);
-        $el.remove();
+        return save ? $el : $el.remove();
     }
 
-    function suite(triggerFn, fnExpects, thorough) {
+    function suite(moduleName, triggerFn, fnExpects, thorough) {
+        module(moduleName);
         test('single event', function() {
             expect(2+fnExpects);
             listenFor('single');
@@ -120,9 +143,34 @@
         }
         test('cancel event', function() {
             expect(2+fnExpects);
-            listenFor('pass', null, null, null, function(){ return false; });
-            expectSilence('fail');
+            listenFor('pass', null, null, null, function(e){ e.preventDefault(); });
+            var listener = silence('fail');
             triggerFn('pass fail');
+            endSilence('fail', listener);
+        });
+
+        asyncTest('event.promise()', function() {
+            expect(6+fnExpects);
+            var resolved = false,
+                after = 'after'+moduleName.replace(/ /g,'_'),
+                listener = silence('after');
+            listenFor('async', null, null, null, function(e) {
+                var promise = new Promise();
+                e.promise(promise);
+                ok(_.preventDefault(e), 'e.promise() should prevent default');
+                setTimeout(function() {
+                    start();
+                    resolved = true;
+                    endSilence(after, listener);
+                    listenFor(after, null, null, null, function() {
+                        if ($el.remove) {
+                            $el.remove();
+                        }
+                    });
+                    promise.resolve();
+                }, 1000);
+            });
+            var $el = triggerFn('async '+after, null, true);
         });
     }
     
@@ -130,6 +178,7 @@
     test('user', function() {
         expect(1, 'user api changed, bump major version');
         ok(trigger, 'no trigger()');
+        //TODO: test event api
     });
     test('developer', function() {
         expect(20, 'developer api changed, bump minor version');
@@ -138,30 +187,22 @@
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in _, 'missing property "'+props[i]+'"');
         }
-        var fns = 'all parse event stop listen find click keyup on init prop'.split(' ');
+        var fns = 'all parse event preventDefault listen find click keyup on init prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
             ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'"');
         }
     });
 
-    module('trigger(event)');
-    suite(trigger, 0);
+    suite('trigger(event)', trigger, 0);
 
-    module('trigger(el, event)');
-    suite(triggerElement, 1);
+    suite('trigger(el,event)', triggerElement, 1);
 
-    module('data-trigger(el, event)');
     _.attr = 'data-trigger';
-    suite(triggerElement, 1, false);
+    suite('data-trigger(el,event)', triggerElement, 1, false);
     _.attr = 'trigger';
 
-    module('native trigger', {
-        setup: function() {// This will run before each test in this module.
-          //TODO?
-        }
-    });
-    //suite(triggerNative, 1);
+    //suite('native trigger', triggerNative, 1);
 
-    module('jQuery trigger');
+    //suite('jQuery trigger', triggerjQuery, 1);
 
 }(jQuery));

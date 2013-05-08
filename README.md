@@ -1,4 +1,4 @@
-Use rich, declarative custom events!
+### Get rich, declarative custom events!
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -18,31 +18,29 @@ Browser are insightful enough to translate certain Enter presses into click even
 but even so, every time you type ```$('#save').on('click', fn)```, you are
 cluttering your app's code with browser implementation details.
 
-### Solution: Declarative Custom Events
+### Solution: Declarative Application Events
 Add a ```trigger="foo""``` attribute to any element,
 when the user "pulls it" (click or Enter keyup, as appropriate),
 your custom event will fire automatically.
 
 Doing ```trigger="validate save"``` will trigger the "validate" and "save" events in sequence.
 Your list of events can be as long as you like. To stop the sequence, catch an event in it
-and call ```event.preventDefault()``` or ```e.returnValue = false;``` 
-and the rest of the sequence will be skipped.
+and call ```event.preventDefault()``` to cancel the rest of the sequence.
 
 ### Problem: Simplistic Events
-If you think of events as descriptive, you soon realize that your code is speaking in
-mere verbs and nouns around, or maybe awkward verbNouns. Then your listeners have to
-search the context to figure out what your events are talking about.
-Sometimes that is unavoidable or even preferable, but there are plenty of situations
-where the type of the event just isn't enough (thus the verbNouns and friends).
+If you think of events as declarative, you soon realize that your code is declaring in
+events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
+glean information from the context to figure what in particular was declared.
+Sometimes that simplicity is good, sometimes it is a real problem.
 
-### Solution: Rich Event Grammer
+### Solution: Rich Events
 trigger.js provides a declarative syntax for grammatically rich events, not merely
 custom event types (usually verbs).
-This keeps your event listeners simpler and, again, boosts the readability of your HTML.
+This keeps your event listeners simpler and your HTML self-documenting.
 
-When you need to distinguish your player's "move" event from that of the enemy,
+When you need to distinguish your player's "move" event from that of a different feature,
 prefix your event with a category (subject/noun): ```trigger="player:move"```.
-Your app-wide action observer can read it from the ```event.category``` property.
+Any app-wide 'move' listener can read it from the ```event.category``` property.
 
 To include contextual data (object/noun) for your event, do: ```trigger="view['start']"```
 The data gets the JSON.parse() treatment (after some quote massaging) and is set at ```event.data```
@@ -52,11 +50,12 @@ Finally, you can add simple tags (adjectives/adverbs) to your events, each prefi
 ```trigger="move#up#left"``` and listen for these at ```event.tags``` and each ```event[tag]```
 (always true when not undefined).
 
-Be warned, if you have legitimate cause (probably rare) to use combinations of all three:
-```trigger="player:move[{'speed':2}]#west"```, then you ***must*** put them in that order:
-category, type, data, tags.  Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.
+NOTE: should you have cause to use combinations of all three (probably rare),
+then you ***must*** put them in this order:
+```trigger="player:move[{'speed':2}]#west"``` (category, type, data, tags).
+Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.
 
-### Problem: Asynchronous Event Sequences
+### Problem: Asynchronous Handlers + Event Sequence = Fail
 Once you are used to chaining events into nice declarative sequences,
 you will likely come upon a situation where one of the handlers needs to do something
 asynchronous (e.g. validate something on the server) before the subsequent events are
@@ -68,7 +67,13 @@ confusing ```<button trigger="validate">Save</button>```. Not so cool.
 ### Solution: Promise-Friendly Event Sequences
 It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
 on the event: ```event.promise(my_jqxhr);```. This automatically cancels the event
-sequence and restarts at the next event once the promise is fulfilled.
+sequence and restarts it at the next event once the promise is fulfilled. Now you
+can have your straightforward ```trigger="validate save"``` button back! Very cool.
+
+NOTE: Only events with subsequent events are given this ability.
+Also, such events will only listen to a single promise. To enforce this and provide
+access to the promise, the ```event.promise()``` function replaces itself with the
+promise you give it.
 
 [promise]: http://wiki.commonjs.org/wiki/Promises/A
 

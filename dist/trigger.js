@@ -4,29 +4,26 @@
 
     var _ = {
         version: "1.0.0",
-        all: function(target, events, oe) {
+        all: function(target, events, oe, e) {
             events = events.split(_.splitRE);
-            for (var i=0, m=events.length, e = oe; i<m && !_.stop(e); i++) {
+            for (var i=0, m=events.length; i<m && !_.preventDefault(e || oe); i++) {
                 var props = _.parse(events[i]);
                 if (props) {
-                    if (m > 1) {
-                        props.triggers = events;
-                        props.promise = _.promise(target, events, i, e);
-                    }
-                    if (i > 0) {
-                        props.previousEvent = e;
-                    }
-                    props.originalEvent = oe;
+                    if (m > 1){ props.triggers = events; }
+                    if (e){ props.previousEvent = e; }
+                    if (oe){ props.originalEvent = oe; }
+                    props.promise = _.promise(target, events, i, oe, e);
                     e = _.event(target, props);
                 }
             }
             return e;
         },
-        promise: function(target, events, i, e) {
+        promise: function(target, events, i, oe, e) {
             return function(promise) {
-                _.stop(e, true);
-                promise.then(function() {
-                    _.all(target, events.slice(i+1).join(' '), e.originalEvent);
+                this.preventDefault();// cancel subsequent events
+                this.promise = promise;// replace self
+                promise.then(function() {// restart subsequent on resolution
+                    _.all(target, events.slice(i+1).join(' '), oe, e);
                 });
             };
         },
@@ -42,7 +39,7 @@
                 }
             }
             if ((bracket = type.indexOf('[')) > 0) {
-                e.data = JSON.parse(type.substring(bracket).replace(/\'/g,'"'));
+                e.data = JSON.parse(type.substring(bracket).replace(/'/g,'"'));
                 type = type.substring(0, bracket);
             }
             if ((colon = type.indexOf(':')) > 0) {
@@ -55,6 +52,9 @@
         event: function(target, props) {
             var e = document.createEvent('HTMLEvents');
             e.initEvent(props.type, true, true);
+            if (!e.preventDefault) {// spare users returnValue hassle
+                e.preventDefault = _.preventDefault;
+            }
             for (var prop in props) {
                 _.prop(prop);// allow jQuery or others to learn of custom properties
                 e[prop] = props[prop];
@@ -62,21 +62,19 @@
             target.dispatchEvent(e);
             return e;
         },
-        stop: function(e, stop) {
-            if (e && stop) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                } else {
-                    e.returnValue = false;
-                }
+        preventDefault: function(e, prevent) {
+            if (e && !prevent) {// just query
+                return e.defaultPrevented || e.returnValue === false;
+            } else if (e && e.preventDefault) {// set on modern native
+                e.preventDefault();
             }
-            return e && (e.defaultPrevented || e.returnValue === false);
+            (e || this).returnValue = false;// set on old IE native
         },
         listen: function(e) {
             var el = e.target;
             if (_[e.type](e, el, el.nodeName.toLowerCase()) && (el = _.find(el))) {
                 _.all(el, el.getAttribute(_.attr), e);
-                return !_.stop(e, !_.boxRE.test(el.type));
+                _.preventDefault(e, !_.boxRE.test(el.type));
             }
         },
         find: function(el) {
