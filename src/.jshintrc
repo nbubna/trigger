@@ -12,7 +12,8 @@
   "eqnull": true,
   "browser": true,
   "globals": {
-    "module": true
+    "module": true,
+    "trigger": true
   },
   "predef": ["jQuery"]
 }
