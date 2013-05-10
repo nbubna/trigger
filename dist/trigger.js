@@ -1,4 +1,4 @@
-/*! trigger - v1.0.0 - 2013-05-08
+/*! trigger - v1.0.0 - 2013-05-10
 * Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
 ;(function(window, document) {
     // user api
