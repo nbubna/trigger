@@ -1,10 +1,10 @@
-/*! trigger - v1.0.0 - 2013-05-10
+/*! trigger - v1.0.0 - 2013-05-14
 * Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
-;(function(window, document) {
-    // user api
+;(function(window, document, $) {
+
     function trigger(){ return _.manual.apply(this, arguments); }
-    trigger.translate = function(){ return _.translate.apply(this, arguments); };
-    // developer api
+    trigger.add = function(){ return _.add.apply(this, arguments); };
+
     var _ = trigger._ = {
         version: "1.0.0",
         prefix: '',
@@ -14,32 +14,33 @@
         buttonRE: /^(submit|button|reset)$/,
         boxRE: /^(checkbox|radio)$/,
         // custom event stuff
-        all: function(target, events, oe, e) {
-            events = events.split(_.splitRE);
-            for (var i=0, m=events.length; i<m && !_.preventDefault(e || oe); i++) {
-                var props = _.parse(events[i]);
+        all: function(target, sequence, te, e, pe) {//trigger event, current event, promised event
+            sequence = sequence.split(_.splitRE);
+            for (var i=0, m=sequence.length; i<m && (pe||!_.stopped(e||te)); i++) {
+                var props = _.parse(sequence[i]);
                 if (props) {
-                    if (m > 1){ props.triggers = events; }
-                    if (e){ props.previousEvent = e; }
-                    if (oe){ props.originalEvent = oe; }
-                    props.promise = _.promise(target, events, i, oe, e);
+                    props.sequence = sequence;
+                    if (e||pe){ props.previousEvent = e||pe; }
+                    if (te){ props.trigger = te; }
+                    props.promise = _.promise(target, sequence, i);
                     e = _.event(target, props);
                 }
             }
             return e;
         },
-        promise: function(target, events, i, oe, e) {
+        promise: function(target, sequence, i) {
             return function(promise) {
-                this.preventDefault();// cancel subsequent events
-                this.promise = promise;// replace self
+                var e = this;
+                e.preventDefault();// cancel subsequent events
+                e.promise = promise;// replace self
                 promise.then(function() {// restart subsequent on resolution
-                    _.all(target, events.slice(i+1).join(' '), oe, e);
+                    _.all(target, sequence.slice(i+1).join(' '), e.trigger, null, e);
                 });
             };
         },
         parse: function(type) {
             if (!type){ return; }
-            var e = { trigger: type },
+            var e = { text: type },
                 colon, pound, bracket;
             if ((pound = type.indexOf('#', type.indexOf(']'))) > 0) {
                 e.tags = type.substring(pound+1).split('#');
@@ -49,7 +50,7 @@
                 }
             }
             if ((bracket = type.indexOf('[')) > 0) {
-                e.data = JSON.parse(type.substring(bracket).replace(/'/g,'"'));
+                e.constants = JSON.parse(type.substring(bracket).replace(/'/g,'"'));
                 type = type.substring(0, bracket);
             }
             if ((colon = type.indexOf(':')) > 0) {
@@ -62,23 +63,22 @@
         event: function(target, props) {
             var e = document.createEvent('HTMLEvents');
             e.initEvent(props.type, true, true);
-            if (!e.preventDefault) {// spare users returnValue hassle
-                e.preventDefault = _.preventDefault;
-            }
-            for (var prop in props) {
-                _.prop(prop);// allow jQuery or others to learn of custom properties
-                e[prop] = props[prop];
+            if (!e.preventDefault){ e.preventDefault = _.stop; }// polyfill
+            for (var key in props) {// copy props w/ext hook
+                e[_.prop(key)] = props[key];
             }
             target.dispatchEvent(e);
             return e;
         },
-        preventDefault: function(e, prevent) {
-            if (e && !prevent) {// just query
-                return e.defaultPrevented || e.returnValue === false;
-            } else if (e && e.preventDefault) {// set on modern native
-                e.preventDefault();
-            }
-            (e || this).returnValue = false;// set on old IE native
+        stopped: function(e) {
+            e = e || this;
+            return (e.isDefaultPrevented && e.isDefaultPrevented()) ||
+                   e.defaultPrevented || e.returnValue === false;
+        },
+        stop: function(e) {
+            e = e || this;
+            if (e.preventDefault){ e.preventDefault(); }
+            else { e.returnValue = false; }
         },
         // native DOM and event stuff
         listen: function(e) {
@@ -93,13 +93,15 @@
             attr = _.attr(el, type);
             if (attr) {
                 _.all(el, attr, e);
-                if (type === 'click') {// almost always prevent default for clicks
-                    _.preventDefault(e, !_.boxRE.test(el.type));
+                if (type === 'click' && !_.boxRE.test(el.type)) {
+                    _.stop(e);
                 }
             }
         },
         on: function(type, fn) {
-            if (jQuery && jQuery.event){ jQuery(document).on(type, fn); }// use it if you've got it
+            if (_.on[type]){ return; } else { _.on[type] = 1; }// no dupes!
+            // support jQuery for fake triggers, but must consume originalEvent when present!
+            if ($ && $.event){ $(document).on(type, function(e){ fn(e.originalEvent||e); }); }
             else if (document.addEventListener){ document.addEventListener(type, fn); }
             else { document.attachEvent('on'+type, function(){ fn(window.event); }); }
         },
@@ -119,25 +121,26 @@
             },
             keyup13: function(e, el, name) {// if fitting attr or not already accessible (i.e. enter !== click)
                 return (_.attr(el, 'key-enter') && 'key-enter') ||// enter sometimes fits better than click
-                       (_.attr(el, e.type) && e.type) ||// return keyup type
+                       (_.attr(el, e.type) && e.type) ||// return keyup type for keyup attr
                        (!el.isContentEditable && !_.noEnterRE.test(name) &&
                         !(name === 'a' && el.getAttribute('href')) && _.buttonRE.test(el.type)) &&
                        'click';// convert to a click
             }
         },
         // extension hooks
-        manual: function(el, events) {
-            if (typeof el === "string"){ events = el; el = document; }
-            return _.all(el, events || _.attr(el, 'click') || '');
+        manual: function(el, sequence) {
+            if (typeof el === "string"){ sequence = el; el = document; }
+            return _.all(el, sequence || _.attr(el, 'click') || '');
         },
-        translate: function() {
+        add: function() {
             for (var i=0,m=arguments.length; i<m; i++){ _.on(arguments[i], _.listen); }
         },
-        prop: function(prop) {// by default support jQuery's event system
-            if (jQuery && jQuery.event && !_.prop[prop]) {
+        prop: function(prop) {// add custom properties to jQuery's event system
+            if ($ && $.event && !_.prop[prop]) {
                 _.prop[prop] = true;
-                jQuery.event.props.push(prop);
+                $.event.props.push(prop);
             }
+            return prop;
         }
     };
     // connect to the outside world
@@ -146,5 +149,5 @@
     } else {
         window.trigger = trigger;
     }
-    trigger.translate('click', 'keyup');
-})(window, document);
+    trigger.add('click', 'keyup');
+})(window, document, window.jQuery);
