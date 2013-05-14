@@ -1,4 +1,4 @@
-### Rich, custom, declarative events!
+### Browser events should automatically trigger rich, application events (via declarative syntax).
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -16,7 +16,7 @@ What application code actually needs to know is when a particular event means
 (e.g. 'save', 'delete', 'next', etc). Cluttering your javascript with browser
 implementation terms like 'click' only make your code less readable and harder
 to test.  Your javascript should ideally only be registering listeners for 
-events that are meaningful (i.e. custom) to your application.
+events that are meaningful (i.e. custom events) to your application.
 
 ### Good: Declarative Application Events
 Add trigger.js to your page, then simply declare what 'click' means
@@ -29,25 +29,25 @@ event is automatically created triggered on the element.
 Your javascript never needs to listen for a click event again.
 
 If translating "click" events is not enough for you,
-you can tell trigger.js to translate other native events as well:  
+you can add other native events as additional triggers:  
 ```javascript
-trigger.translate('dblclick');
+trigger.add('dblclick');
 ```
 ```html
 <div class="folder" dblclick="open">...</div>
 ```
 
-NOTE: If you want trigger.js to translate events that do not natively bubble,
-just include jQuery (at least the event support) in your page and all shall be well.
+NOTE: If you want to add events as triggers that do not natively bubble,
+include jQuery (at least the event support) in your page and all shall be well.
 
 
 ### Hard: Dependent Events
-Sometimes a single "click" should trigger a sequence of events. This can be handled
-by registering multiple event listeners in careful order and using tricks like
-jQuery's or triggering the next event at the completion of the previous one.
+Sometimes a single "click" is actually a trigger for a sequence of events.
+This can be handled by registering multiple event listeners in careful order
+or triggering the next event at the completion of the previous one.
 But this can be a fragile, complicated process and is far from declarative and readable.
-It's no fun when you ```e.stopImmediatePropogation();``` and end up cancelling listeners
-you didn't mean to cancel.
+It's no fun when you do ```event.stopImmediatePropogation();``` and
+end up cancelling listeners you didn't mean to cancel.
 
 ### Easy: Declarative Event Sequences
 ```html
@@ -59,25 +59,25 @@ and call ```event.preventDefault()``` to cancel only the rest of the specific, d
 
 
 ### Mediocre: Simplistic Events
-Once you've achieved app-specific events, you may realize that your code is only declaring
+Once you've earned your "Application Events" achievement, you may realize you are only declaring
 events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
 glean information from the context or target element to decipher the full meaning of the event.
 Sometimes that simplicity is good, but sometimes it is a real problem.
 
 ### Awesome: Rich Events
-trigger.js provides a declarative syntax for grammatically rich events, 
-for better self-documentation in your javascript and HTML,
-as well as simpler event listeners.
+trigger.js provides a declarative syntax for grammatically rich events.
+This helps you level-up the self-documentation of your javascript and HTML
+and simplify your event listeners.
 
 #### click="category:type" -> event.category
 When you need to distinguish your player's "move" event from that of a different feature,
 prefix your event with a category (subject/noun): ```click="player:move"```.
 Any app-wide 'move' listener can read it from the ```event.category``` property.
 
-#### click="type[data]" -> event.data
-To include contextual data (object/noun) for your event, do: ```click="view['start']"```
-The data gets the JSON.parse() treatment (after some quote massaging) and is set at ```event.data```
-(always in an array, thus the brackets);
+#### click="type['constant']" -> event.constants
+To include contextual constants (object/noun) for your event, do: ```click="view['start']"```
+The constant gets the JSON.parse() treatment (after some quote massaging) and
+is set at ```event.constants``` (always in an array, thus the brackets);
 
 #### click="type#tag" -> event.tags
 Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
@@ -85,7 +85,7 @@ Finally, you can add simple tags (adjectives/adverbs) to your events, each prefi
 (the individual tags are always given a value of ```true```).
 
 NOTE: If you have a reason to use combinations of all three (probably rare),
-then you ***must*** put them in this order: ```category:type[data]#tags```
+then you ***must*** put them in this order: ```category:type['constant']#tags```
 (e.g. ```click="player:move[{'speed':2}]#west"```).
 Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.
 
@@ -101,7 +101,7 @@ confusing ```<button click="validate">Save</button>```.
 
 ### Win: ```event.promise(promise)```
 It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
-on the event: ```event.promise(my_jqxhr);```. This automatically cancels the event
+on the event (e.g. ```event.promise(jqxhr);```). This automatically stops the event
 sequence and restarts it at the next event once the promise is fulfilled. Now you
 can have your straightforward ```click="validate save"``` button back!
 
@@ -127,7 +127,7 @@ trigger._.prefix = 'data-';
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
 
 
-### Another Example
+### A Mini-Example
 ```html
 <div id="#chutesAndLadders">
  <input type="dice" name="roll">
@@ -156,7 +156,7 @@ have a click attribute itself, but was a child of an element that did have one.
  * Enter keyups (keyCode:13) are treated as clicks if their target lacks a "native response"
 to such events (e.g. in a textarea, it adds a new line, or on a link, it causes a click).
 The exception being if such an element has a keyup attribute declared on it.
- * When a click is translated by trigger.js, it will automatically prevent the original event's
+ * When a click is used by trigger.js, it will automatically prevent the original event's
 default behavior, except in the case of radio buttons and checkboxes. The assumption is
 that the default behavior is replaced by the declared event sequence.
 
@@ -177,11 +177,11 @@ $.extend(trigger._.special, {
 });
 ```
 Notice that ```key-enter``` is already supported, and, because trigger.js already listens
-for ```keyup``` and ```click``` events, we didn't have to call ```trigger.translate('keyup');```.
+for ```keyup``` and ```click``` events, we didn't have to call ```trigger.add('keyup');```.
 
 
 
 ## Release History
 * 2010-04-02 v0.1 (internal release - jQuery plugin)
-* 2012-09-13 v0.3 (internal release - declarative tags and data)
-* 2013-05-09 v1.0.0 (public - promises, translate, native, and more)
+* 2012-09-13 v0.3 (internal release - declarative tags and constants)
+* 2013-05-15 v1.0.0 (public - promises, add, native, and much more)
