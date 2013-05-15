@@ -6,12 +6,12 @@
     function on(type, listener, usejQuery) {
         if (usejQuery){ $(document).on(type, listener); }
         else if (document.addEventListener){ document.addEventListener(type, listener); }
-        else { document.attachEvent('on'+type, function(){ listener(window.event); }); }
+        else { on(type, listener, true); }
     }
     function off(type, listener, usejQuery) {
         if (usejQuery){ $(document).off(type, listener); }
         else if (document.removeEventListener){ document.removeEventListener(type, listener); }
-        else { document.detachEvent('on'+type, listener); }
+        else { off(type, listener, true); }
     }
     function silence(type, usejQuery) {
         var fail = function() {
