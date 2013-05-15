@@ -86,7 +86,7 @@
     function fire(e, env) {
         if (typeof e === "string"){ e = { events:e }; }
         if (!e.element){ e.element = env.useElement; }
-        if (!e.type) { e.type = env.useType; }
+        if (!e.type) { e.type = env.useTrigger; }
         if (!e.element) {
             return trigger(e.events);
         }
@@ -99,12 +99,14 @@
         if (env.usejQuery) {
             $(e.element).trigger(e.type);
         } else {
-            if (e.element[e.type]) {
+            if ($.isFunction(e.element[e.type])) {
                 e.element[e.type]();
-            } else {
+            } else if (document.createEvent) {
                 var evt = document.createEvent('UIEvents');
                 evt.initEvent(e.type, true, true);
                 e.element.dispatchEvent(evt);
+            } else {
+                $(e.element).trigger(e.type);
             }
         }
     }
@@ -203,7 +205,7 @@
     var id = 0;
     function suite(name, env) {
         id++;
-        if (!env.useType){ env.useType = 'click'; }
+        if (!env.useTrigger){ env.useTrigger = 'click'; }
         module(name+' standard');
         basic(id, env);
         properties(id, env);
@@ -249,7 +251,7 @@
 
     suite('<button click="events">', {useElement: 'button'});
 
-    suite('<input keypress="events">', {useType:'keypress', useElement: 'input'});
+    suite('<input keypress="events">', {useTrigger:'keypress', useElement: 'input'});
 
     var special = _.special;
     test('_.special.click', function(){
