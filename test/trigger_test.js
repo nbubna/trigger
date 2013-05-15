@@ -239,7 +239,7 @@
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in _, 'missing property "'+props[i]+'", not backward compatible');
         }
-        var fns = 'all parse event stop stopped listen find attr on manual add prop'.split(' ');
+        var fns = 'all parse event stopped listen find attr on manual add prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
             ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'", not backward compatible');
         }
@@ -251,6 +251,45 @@
 
     suite('<input keypress="events">', {useType:'keypress', useElement: 'input'});
 
-    //TODO: test special click and keyup handling
+    var special = _.special;
+    test('_.special.click', function(){
+        //var textarea = $('<textarea>'),
+        //    e = { type: 'click' };
+        expect(0);// for now
+    });
+    test('_.special.keyup13', function(){
+        expect(0);//for now
+    });
+
+    special.fake2 = function(e, el, name) {
+        equal(e.type, 'fake');
+        equal(e.which || e.keyCode, 2);
+        ok(el, 'should have an element');
+        equal(name, 'myelement');
+        return e.abort ? false : 'alt';
+    };
+    test('_.special.fake2', function(){
+        _.listen({
+            type: 'fake',
+            which: 2,
+            abort: true,
+            target: {
+                nodeName: 'MyElement',
+                getAttribute: function() {
+                    ok(false, '_.listen should abort when special.fake2 does not return a type');
+                }
+            }
+        });
+        _.listen({
+            type: 'fake',
+            keyCode: 2,
+            target: {
+                nodeName: 'MYELEMENT',
+                getAttribute: function(type) {
+                    equal(type, 'alt');
+                }
+            }
+        });
+    });
 
 }(jQuery));
