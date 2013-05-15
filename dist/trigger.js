@@ -1,4 +1,4 @@
-/*! trigger - v1.0.0 - 2013-05-14
+/*! trigger - v1.0.0 - 2013-05-15
 * Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
 ;(function(window, document, $) {
 
@@ -63,7 +63,6 @@
         event: function(target, props) {
             var e = document.createEvent('HTMLEvents');
             e.initEvent(props.type, true, true);
-            if (!e.preventDefault){ e.preventDefault = _.stop; }// polyfill
             for (var key in props) {// copy props w/ext hook
                 e[_.prop(key)] = props[key];
             }
@@ -72,13 +71,7 @@
         },
         stopped: function(e) {
             e = e || this;
-            return (e.isDefaultPrevented && e.isDefaultPrevented()) ||
-                   e.defaultPrevented || e.returnValue === false;
-        },
-        stop: function(e) {
-            e = e || this;
-            if (e.preventDefault){ e.preventDefault(); }
-            else { e.returnValue = false; }
+            return (e.isDefaultPrevented && e.isDefaultPrevented()) || e.defaultPrevented;
         },
         // native DOM and event stuff
         listen: function(e) {
@@ -94,7 +87,7 @@
             if (attr) {
                 _.all(el, attr, e);
                 if (type === 'click' && !_.boxRE.test(el.type)) {
-                    _.stop(e);
+                    e.preventDefault();
                 }
             }
         },
@@ -102,8 +95,7 @@
             if (_.on[type]){ return; } else { _.on[type] = 1; }// no dupes!
             // support jQuery for fake triggers, but must consume originalEvent when present!
             if ($ && $.event){ $(document).on(type, function(e){ fn(e.originalEvent||e); }); }
-            else if (document.addEventListener){ document.addEventListener(type, fn); }
-            else { document.attachEvent('on'+type, function(){ fn(window.event); }); }
+            else { document.addEventListener(type, fn); }
         },
         attr: function(el, type) {
             return el && el.getAttribute && el.getAttribute(_.prefix+type);
@@ -143,6 +135,14 @@
             return prop;
         }
     };
+    // all jquery for old browsers
+    if (!document.createEvent) {
+        _.event = function(target, props) {
+            var e = $.Event(props.type, props);
+            $(target).trigger(e);
+            return e;
+        };
+    }
     // connect to the outside world
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = trigger;
