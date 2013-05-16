@@ -26,13 +26,13 @@
                     props.sequence = sequence;
                     if (e){ props.previousEvent = e; }
                     if (t){ props.trigger = t; }
-                    _.addStop(props, target, sequence, i);
+                    _.controls(props, target, sequence, i);
                     e = _.event(target, props);
                 }
             }
             return e;
         },
-        addStop: function(props, target, sequence, i, stopped) {
+        controls: function(props, target, sequence, i, stopped) {
             props.resumeSequence = function(t) {
                 if (stopped) {
                     stopped = false;

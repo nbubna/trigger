@@ -225,7 +225,7 @@
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in _, 'missing property "'+props[i]+'", not backward compatible');
         }
-        var fns = 'all parse event addStop listen find attr on manual add prop'.split(' ');
+        var fns = 'all parse event controls listen find attr on manual add prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
             ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'", not backward compatible');
         }
