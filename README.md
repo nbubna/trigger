@@ -1,4 +1,4 @@
-### Browser events should automatically trigger rich, application events (via declarative syntax).
+### Rich, declarative, custom events made awesome.
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -18,7 +18,7 @@ implementation terms like 'click' only make your code less readable and harder
 to test.  Your javascript should ideally only be registering listeners for 
 events that are meaningful (i.e. custom events) to your application.
 
-### Good: Declarative Application Events
+### Awesome: Declarative Application Events
 Add trigger.js to your page, then simply declare what 'click' means
 right there on your element:
 ```html
@@ -49,7 +49,7 @@ But this can be a fragile, complicated process and is far from declarative and r
 It's no fun when you do ```event.stopImmediatePropogation();``` and
 end up cancelling listeners you didn't mean to cancel.
 
-### Easy: Declarative Event Sequences
+### Awesome: Declarative Event Sequences
 ```html
 <input type="submit" click="validate save">
 ```
@@ -101,7 +101,7 @@ the end of the success callback for your async business.  But this means your ni
 declarative ```<button click="validate save">Save</button>``` element becomes a
 confusing ```<button click="validate">Save</button>```.
 
-### Win: ```event.promise(promise)```
+### Awesome: ```event.promise(promise)```
 It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
 on the event (e.g. ```event.stopSequence(promise);```). This stops the event sequence
 and automatically resumes it again once the promise is fulfilled. Now you
@@ -114,7 +114,7 @@ can have your straightforward ```click="validate save"``` button back!
 You, of course, understand why [HTML validation is considered harmful][invalid],
 but your pointy-haired boss believes it is a sign of good web design.
 
-### Workaround: data- prefix
+### Grudging Workaround: data- prefix
 ```javascript
 trigger._.prefix = 'data-';
 ```

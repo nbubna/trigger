@@ -1,7 +1,7 @@
 {
   "name": "trigger",
-  "description": "Better localStorage",
-  "keywords": ["events","custom","declarative","trigger","rich","namespace","DOM"],
+  "description": "Rich, declarative, custom events made easy! Don't just listen for 'click'.",
+  "keywords": ["events","custom","declarative","trigger","rich","namespace","DOM","easy"],
   "version": "1.0.0",
   "author": {
     "name": "Nathan Bubna",
