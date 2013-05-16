@@ -18,30 +18,36 @@
         buttonRE: /^(submit|button|reset)$/,
         boxRE: /^(checkbox|radio)$/,
         // custom event stuff
-        all: function(target, sequence, te, e, pe) {//trigger event, current event, promised event
+        all: function(target, sequence, t) {//t==trigger (usually a 'click'ish event)
             sequence = sequence.split(_.splitRE);
-            for (var i=0, m=sequence.length; i<m && (pe||!_.stopped(e||te)); i++) {
-                var props = _.parse(sequence[i]);
+            for (var i=0, e, props; i<sequence.length && (!e||e.resumeSequence===_.noop); i++) {
+                props = _.parse(sequence[i]);
                 if (props) {
                     props.sequence = sequence;
-                    if (e||pe){ props.previousEvent = e||pe; }
-                    if (te){ props.trigger = te; }
-                    props.promise = _.promise(target, sequence, i);
+                    if (e){ props.previousEvent = e; }
+                    if (t){ props.trigger = t; }
+                    props.stopSequence = _.stopSequence(target, sequence, i);
+                    props.resumeSequence = _.noop;
                     e = _.event(target, props);
                 }
             }
             return e;
         },
-        promise: function(target, sequence, i) {
-            return function(promise) {
-                var e = this;
-                e.preventDefault();// cancel subsequent events
-                e.promise = promise;// replace self
-                promise.then(function() {// restart subsequent on resolution
-                    _.all(target, sequence.slice(i+1).join(' '), e.trigger, null, e);
-                });
+        stopSequence: function(target, sequence, i, __) {
+            return __ = function(promise) {
+                var e = this,
+                    oe = e.originalEvent;
+                if (oe && oe.stopSequence === __){ e = oe; }// or else resume on $ copy is wrong
+                e.resumeSequence = function(t) {
+                    e.resumeSequence = _.noop;
+                    _.all(target, sequence.slice(i+1).join(' '), t||e.trigger);
+                };
+                if (promise) {
+                    return promise.then(e.resumeSequence);
+                }
             };
         },
+        noop: function(){},
         parse: function(type) {
             if (!type){ return; }
             var e = { text: type },
@@ -72,10 +78,6 @@
             }
             target.dispatchEvent(e);
             return e;
-        },
-        stopped: function(e) {
-            e = e || this;
-            return (e.isDefaultPrevented && e.isDefaultPrevented()) || e.defaultPrevented;
         },
         // native DOM and event stuff
         listen: function(e) {
@@ -139,14 +141,6 @@
             return prop;
         }
     };
-    // all jquery for old browsers
-    if (!document.createEvent) {
-        _.event = function(target, props) {
-            var e = $.Event(props.type, props);
-            $(target).trigger(e);
-            return e;
-        };
-    }
     // connect to the outside world
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = trigger;

@@ -37,7 +37,7 @@ trigger.add('dblclick');
 <div class="folder" dblclick="open">...</div>
 ```
 
-NOTE: If you want to add events as triggers that do not natively bubble,
+NOTE: If you want to add events that do not natively bubble as triggers,
 include jQuery (at least the event support) in your page and all shall be well.
 
 
@@ -55,7 +55,8 @@ end up cancelling listeners you didn't mean to cancel.
 ```
 This will trigger the "validate" and "save" events in sequence.
 Your list of events can be as long as you like. To stop the sequence, catch an event in it
-and call ```event.preventDefault()``` to cancel only the rest of the specific, declared sequence.
+and call ```event.stopSequence()``` to stop the rest of the specific, declared sequence.
+Then, if you like, you can call ```event.resumeSequence()``` to restart it where you left off.
 
 
 ### Mediocre: Simplistic Events
@@ -101,18 +102,14 @@ confusing ```<button click="validate">Save</button>```.
 
 ### Win: ```event.promise(promise)```
 It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
-on the event (e.g. ```event.promise(jqxhr);```). This automatically stops the event
-sequence and restarts it at the next event once the promise is fulfilled. Now you
+on the event (e.g. ```event.stopSequence(promise);```). This stops the event sequence
+and automatically resumes it again once the promise is fulfilled. Now you
 can have your straightforward ```click="validate save"``` button back!
-
-NOTE: Events will only listen to a single promise. To enforce this and provide
-access to the promise, the ```event.promise()``` function replaces itself with the
-promise you give it.
 
 [promise]: http://wiki.commonjs.org/wiki/Promises/A
 
 
-### Irritation: HTML Validation
+### Small Irritation: HTML Validation
 You, of course, understand why [HTML validation is considered harmful][invalid],
 but your pointy-haired boss believes it is a sign of good web design.
 
@@ -126,8 +123,30 @@ trigger._.prefix = 'data-';
 
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
 
+### Huge Irritation: IE < 9
+You aren't ready to abandon the poor saps still using ancient versions of IE.
+Sure, Google stopped supporting them, but you aren't Google.
 
-### A Mini-Example
+### Relief: jQuery and trigger.old.js
+Just use jQuery (of course) and this [tiny extension][old]:
+```html
+<!--[if lt IE lt 9]>
+  <script src="../src/trigger.old.js"></script>
+<![endif]-->
+```
+
+[old]: https://raw.github.com/nbubna/trigger/master/src/trigger.old.js
+
+### Another Small Extension
+If you see yourself manually using trigger instead of always letting browser events
+serve as triggers and also happen to be fond of jQuery, [jquery.trigger.js][jquery]
+allows you to do ```$('#foo').trigger('foo:squish#gooey');``` instead of
+```trigger($('#foo')[0], 'foo:squish#gooey');```.
+
+[jquery]: https://raw.github.com/nbubna/trigger/master/src/jquery.trigger.js
+
+
+### Mini-Example, Just For Fun
 ```html
 <div id="#chutesAndLadders">
  <input type="dice" name="roll">
@@ -144,7 +163,7 @@ game.addEventListener('move', function(e) {
    var distance = game.querySelector('[name=roll]').value;
    if (e.up) player.climb(distance);
    if (e.down) player.slide(distance);
-   if (player.hasWon()) e.preventDefault();//blocks nextPlayer event
+   if (player.hasWon()) e.stopSequence();//blocks nextPlayer event
 });
 ```
 
@@ -179,9 +198,10 @@ $.extend(trigger._.special, {
 Notice that ```key-enter``` is already supported, and, because trigger.js already listens
 for ```keyup``` and ```click``` events, we didn't have to call ```trigger.add('keyup');```.
 
-
+TODO: add more advanced details...
 
 ## Release History
-* 2010-04-02 v0.1 (internal release - jQuery plugin)
-* 2012-09-13 v0.3 (internal release - declarative tags and constants)
-* 2013-05-15 v1.0.0 (public - promises, add, native, and much more)
+* 2010-04-02 v0.1 (internal)
+* 2012-09-13 v0.3 (internal)
+* 2013-05-03 v0.9.0 (public) - First GitHub release
+* 2013-05-16 v1.0.0 (public) - tests and feature completeness

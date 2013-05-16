@@ -12,13 +12,4 @@
             this.each(function(){ trigger(this, type || this.getAttribute(_.attr)); }) :
             _.fn.apply(this, arguments);
     };
-    _.on = function(type, fn){ $(document).on(type, fn); };
-    _.event = function(target, props) {
-        var e = $.Event(props.type, props);
-        _.fn.call($(target), e, props.data);
-        return e;
-    };
-    _.stop = function(e, stop) {
-        return stop ? e.preventDefault() || true : e.isDefaultPrevented();
-    };
 })(jQuery, trigger, trigger._);

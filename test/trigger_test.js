@@ -13,17 +13,6 @@
         else if (document.removeEventListener){ document.removeEventListener(type, listener); }
         else { off(type, listener, true); }
     }
-    function silence(type, usejQuery) {
-        var fail = function() {
-            ok(false, 'There should not have been a "'+type+'" event.');
-            off(type, fail, usejQuery);
-        };
-        on(type, fail, usejQuery);
-        return fail;
-    }
-    function endSilence(type, fail, usejQuery) {
-        off(type, fail, usejQuery);
-    }
     function listenFor(expect, env) {
         if (typeof expect === "string"){ expect = {type:expect}; }
         var listener;
@@ -32,23 +21,8 @@
             var ret;
             for (var key in expect) {
                 var val = expect[key];
-                if (key === 'promise') {
-                    if ($.isArray(val)) {
-                        val = new TestPromise(e, val, env);// create a promise that resolves in val time
-                    }
-                    e.promise(val);
-                    strictEqual(e.promise, val, 'e.promise(p) should replace itself with arg');
-                    ok(_.stopped(e), 'e.promise() should prevent default');
-                }
-                else if (key === 'stop') {
-                    stopSequence(e, expect, env);
-                }
-                else if ($.isFunction(val)) {
-                    if (key === 'handler') {
-                        ret = val.apply(this, arguments);
-                    } else {
-                        val = val.apply(this, arguments);
-                    }
+                if (key === 'stop') {
+                    stopSequence(e, env, val);
                 }
                 else if ($.isArray(val) || $.isPlainObject(val)) {
                     deepEqual(e[key], expect[key], key+' mismatch');
@@ -68,21 +42,66 @@
             return ret;
         }), env.usejQuery);
     }
-    function stopSequence(e, expect, env) {
-        var next = nextEvent(e),
-            listener = silence(next, env.usejQuery);
-        if (!expect.handler) {
-            e.preventDefault();
-            ok(_.stopped(e), 'default should be prevented');
-        }
-        // clean up
-        setTimeout(function(){
-            if (e.target !== document) {
-                $(e.target).remove();
-            }
-            endSilence(next, listener, env.usejQuery);
-        }, 0);
+    function silence(type, usejQuery) {
+        var fail = function() {
+            ok(false, 'There should not have been a "'+type+'" event.');
+            off(type, fail, usejQuery);
+        };
+        on(type, fail, usejQuery);
+        return fail;
     }
+    function nextEvent(e) {
+        var seq = e.sequence || [],
+            i = $.inArray(e.text, seq),
+            next = _.parse(seq[i+1]);
+        return next ? next.type : null;
+    }
+    function stopSequence(e, env, output) {
+        var next = nextEvent(e),
+            listener = silence(next, env.usejQuery),
+            promise = false,
+            clean = function(){return e.target!==document && $(e.target).remove();};
+        if ($.isArray(output)) {
+            promise = new Thennable(next, listener, output, env);
+            promise.then(clean);
+        }
+        ok(next, e.type+' should have a next event, when testing stopSequence');
+        e.stopSequence(promise);
+        if (!promise) {
+            setTimeout(function(){
+                clean();
+                off(next, listener, env.usejQuery);
+            }, 0);
+        }
+    }
+    function Thennable(next, listener, output, env) {
+        var promise = this;
+        setTimeout(function() {
+            start();
+            off(next, listener, env.usejQuery);
+            for (var i=0,m=output.length; i<m; i++) {
+                listenFor(output[i], env);
+            }
+            promise.resolve('tested!');
+        }, 100);
+    }
+    Thennable.prototype = {
+        fn: [],
+        then: function(fn) {
+            this.fn.push(fn);
+            if ('resolution' in this) {
+                this.resolve(this.resolution);
+            }
+            return this;
+        },
+        resolve: function(val) {
+            this.resolution = val;
+            var fn;
+            while (fn = this.fn.pop()) {
+                fn(val);
+            }
+        }
+    };
     function fire(e, env) {
         if (typeof e === "string"){ e = { events:e }; }
         if (!e.element){ e.element = env.useElement; }
@@ -111,7 +130,7 @@
         }
     }
     function _test(name, input, output, env) {
-        var testFn = output.promise ? asyncTest : test;
+        var testFn = $.isArray(output.stop) ? asyncTest : test;
         if ($.isPlainObject(name)) {
             env = output; output = input; input = name;
             name = input.type ? input.type+'='+input.events : input.events;
@@ -136,52 +155,18 @@
         } else {
             num = e.tags ? e.tags.length : 0;
             for (var key in e) {
-                if (key === 'promise') {
-                    num += count(e.promise) + 4;
-                } else if (key !== 'handler') {
-                    num++;
+                if (key === 'stop') {
+                    num += 1;
+                    if ($.isArray(e[key])) {// async output for Thennable
+                        num += count(e[key]) - 1;
+                    }
+                } else {
+                    num += 1;
                 }
             }
         }
         return num;
     }
-    function nextEvent(e) {
-        var seq = e.sequence || [],
-            i = $.inArray(e.text, seq),
-            next = _.parse(seq[i+1]);
-        return next ? next.type : null;
-    }
-    function TestPromise(e, output, env) {
-        var promise = this,
-            next = nextEvent(e),
-            listener = silence(next, env.usejQuery);
-        ok(next, e.type+' should have a next event');
-        setTimeout(function() {
-            start();
-            endSilence(next, listener, env.usejQuery);
-            for (var i=0,m=output.length; i<m; i++) {
-                listenFor(output[i], env);
-            }
-            promise.resolve('tested!');
-        }, output.time || 100);
-    }
-    TestPromise.prototype = {
-        fn: [],
-        then: function(fn) {
-            ok(fn, 'then(fn) must have a function argument');
-            this.fn.push(fn);
-            if ('resolution' in this) {
-                this.resolve(this.resolution);
-            }
-        },
-        resolve: function(val) {
-            this.resolution = val;
-            var fn;
-            while (fn = this.fn.pop()) {
-                fn(val);
-            }
-        }
-    };
     // end util fns
 
     function basic(id, env) {
@@ -199,8 +184,7 @@
     function sequences(id, env) {
         _test('sequence'+id, 'one'+id+' two'+id, ['one'+id,'two'+id], env);
         _test('stop'+id, 'pass'+id+' fail'+id, {type:'pass'+id, stop:true }, env);
-        var async = 'async'+id;//Math.random();
-        _test('promise', async+' after', {type:async, promise:['after']}, env);
+        _test('async'+id, 'async'+id+' after', {type:'async'+id, stop:['after'+id]}, env);
     }
     var id = 0;
     function suite(name, env) {
@@ -227,7 +211,7 @@
         ok($.isFunction(trigger.add), 'require trigger.add() for compatibility');
         var e = _.all(document.body, 'a b:c["d"]#e', {type:'fakeTrigger'}),
             props = 'type target sequence text previousEvent trigger tags constants category'.split(' '),
-            fns = 'preventDefault promise'.split(' ');
+            fns = 'stopSequence'.split(' ');
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in e, 'event should have property "'+props[i]+'"');
         }
@@ -241,7 +225,7 @@
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in _, 'missing property "'+props[i]+'", not backward compatible');
         }
-        var fns = 'all parse event stopped listen find attr on manual add prop'.split(' ');
+        var fns = 'all parse event stopSequence noop listen find attr on manual add prop'.split(' ');
         for (i=0,m=fns.length; i<m; i++) {
             ok($.isFunction(_[fns[i]]), 'missing function "'+fns[i]+'", not backward compatible');
         }
