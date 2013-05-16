@@ -20,34 +20,35 @@
         // custom event stuff
         all: function(target, sequence, t) {//t==trigger (usually a 'click'ish event)
             sequence = sequence.split(_.splitRE);
-            for (var i=0, e, props; i<sequence.length && (!e||e.resumeSequence===_.noop); i++) {
+            for (var i=0, e, props; i<sequence.length && (!e||!e.isSequenceStopped()); i++) {
                 props = _.parse(sequence[i]);
                 if (props) {
                     props.sequence = sequence;
                     if (e){ props.previousEvent = e; }
                     if (t){ props.trigger = t; }
-                    props.stopSequence = _.stopSequence(target, sequence, i);
-                    props.resumeSequence = _.noop;
+                    _.addStop(props, target, sequence, i);
                     e = _.event(target, props);
                 }
             }
             return e;
         },
-        stopSequence: function(target, sequence, i, __) {
-            return __ = function(promise) {
-                var e = this,
-                    oe = e.originalEvent;
-                if (oe && oe.stopSequence === __){ e = oe; }// or else resume on $ copy is wrong
-                e.resumeSequence = function(t) {
-                    e.resumeSequence = _.noop;
-                    _.all(target, sequence.slice(i+1).join(' '), t||e.trigger);
-                };
-                if (promise) {
-                    return promise.then(e.resumeSequence);
+        addStop: function(props, target, sequence, i, stopped) {
+            props.resumeSequence = function(t) {
+                if (stopped) {
+                    stopped = false;
+                    _.all(target, sequence.slice(i+1).join(' '), t||props.trigger);
                 }
             };
+            props.stopSequence = function(promise) {
+                if (stopped !== false) {// after resume, can't stop again
+                    stopped = true;
+                    if (promise) {
+                        return promise.then(this.resumeSequence);
+                    }
+                }
+            };
+            props.isSequenceStopped = function(){ return !!stopped; };
         },
-        noop: function(){},
         parse: function(type) {
             if (!type){ return; }
             var e = { text: type },
