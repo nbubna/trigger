@@ -104,20 +104,17 @@
     };
     function fire(e, env) {
         if (typeof e === "string"){ e = { events:e }; }
-        if (!e.element){ e.element = env.useElement; }
-        if (!e.type) { e.type = env.useTrigger; }
+        if (!e.element){ e.element = env.element; }
+        if (!e.type) { e.type = env.trigger || 'click'; }
         if (!e.element) {
             return trigger(e.events);
         }
         // make sure trigger is listening
         trigger.add(e.type);
         e.events = e.events.replace(/"/g, "'");
-        if (typeof e.element === "string") {
-            e.element = $('<'+e.element+'>').attr(e.type, e.events).appendTo('body')[0];
-        }
-        if (env.usejQuery) {
-            $(e.element).trigger(e.type);
-        } else {
+        e.element = create(e.element, env.trigger || e.type, e.events, env.parent);
+        var jq = env.usejQuery;
+        if (!jq) {
             if ($.isFunction(e.element[e.type])) {
                 e.element[e.type]();
             } else if (document.createEvent) {
@@ -125,9 +122,28 @@
                 evt.initEvent(e.type, true, true);
                 e.element.dispatchEvent(evt);
             } else {
-                $(e.element).trigger(e.type);
+                jq = true;
             }
         }
+        if (jq) {
+            $(e.element).trigger($.Event(e.type, { which: env.which }));
+        }
+        return e.element;
+    }
+    function create(element, type, events, parent) {
+        if (typeof element === "string") {
+            if (element.charAt(0) !== '<') {
+                element = '<'+element+'>';
+            }
+        }
+        element = $(element);
+        if (parent) {
+            parent = create(parent, type, events);
+            $(parent).append(element);
+        } else {
+            element.attr(type, events).appendTo('body');
+        }
+        return element[0];
     }
     function _test(name, input, output, env) {
         var testFn = $.isArray(output.stop) ? asyncTest : test;
@@ -189,7 +205,6 @@
     var id = 0;
     function suite(name, env) {
         id++;
-        if (!env.useTrigger){ env.useTrigger = 'click'; }
         module(name+' standard');
         basic(id, env);
         properties(id, env);
@@ -233,30 +248,71 @@
 
     suite('trigger(events)', {});
 
-    suite('<button click="events">', {useElement: 'button'});
+    suite('<button click="events">', {element: 'button'});
 
-    suite('<input keypress="events">', {useTrigger:'keypress', useElement: 'input'});
+    suite('<input keypress="events">', {trigger:'keypress', element: 'input'});
 
-    var special = _.special;
-    test('_.special.click', function(){
-        //var textarea = $('<textarea>'),
-        //    e = { type: 'click' };
-        expect(0);// for now
+    suite('<div click="events"><span>target</span></div>', {element:'<span>target</span>', parent: 'div'});
+
+    module('_.special');
+    var special = _.special,
+        contenteditable = 'isContentEditable' in $('<div contenteditable="true">')[0];
+    test('click: children to ignore', function(){
+        expect(0);
+        var type = 'ignoreClick',
+            listener = silence(type),
+            $els = $();
+        $els.push(fire(type, {element:'textarea', parent:'div'}),
+                  fire(type, {element:'<select><option>test</option></select>', parent:'span'}),
+                  fire(type, {element:'<input type="date">', parent:'form'}));
+        if (contenteditable) {
+            $els.push(fire(type, {element:'<div contenteditable="true"/>', parent:'header'}));
+        }
+        $els.remove();
+        off(type, listener);
     });
-    test('_.special.keyup13', function(){
-        expect(0);//for now
+    test('click: allow due to attr', function() {
+        listenFor('allowTextarea', {});
+        fire('allowTextarea', {element:'textarea'});
+        listenFor('allowInputText', {});
+        fire('allowInputText', {element:'<input type="text">', usejQuery:true });
+    });
+    test('keyup13: children to ignore', function(){
+        expect(0);
+        var type = 'ignoreEnter',
+            listener = silence(type, true),
+            base = { which: 13, trigger: 'keyup', parent:'div', usejQuery: true },
+            $els = $();
+        $els.push(fire(type, $.extend({element:'<a href="http://example.com">'}, base)),
+                  fire(type, $.extend({element:'textarea'}, base)),
+                  fire(type, $.extend({element:'button'}, base)),
+                  fire(type, $.extend({element:'<input type="submit">'}, base)));
+        if (contenteditable) {
+            $els.push(fire(type, $.extend({element:'<span contenteditable="true">'}, base)));
+        }
+        $els.remove();
+        off(type, listener, true);
+    });
+    test('keyup13: allow due to attr', function() {
+        var doit = function(element, trigger, usejQuery) {
+                listenFor('allow_'+element, { usejQuery: usejQuery });
+                fire({ events: 'allow_'+element, type: 'keyup' },
+                     { element: element, which: 13, trigger: trigger, usejQuery: usejQuery });
+            };
+        doit('textarea', 'keyup');
+        doit('input', 'key-enter', true);
     });
 
-    special.fake2 = function(e, el, name) {
-        equal(e.type, 'fake');
+    special.keyfake2 = function(e, el, name) {
+        equal(e.type, 'keyfake');
         equal(e.which || e.keyCode, 2);
         ok(el, 'should have an element');
         equal(name, 'myelement');
         return e.abort ? false : 'alt';
     };
-    test('_.special.fake2', function(){
+    test('"keyfake2" extension', function(){
         _.listen({
-            type: 'fake',
+            type: 'keyfake',
             which: 2,
             abort: true,
             target: {
@@ -267,7 +323,7 @@
             }
         });
         _.listen({
-            type: 'fake',
+            type: 'keyfake',
             keyCode: 2,
             target: {
                 nodeName: 'MYELEMENT',
@@ -277,5 +333,7 @@
             }
         });
     });
+
+    //TODO: test that clicks on !_.boxRE(el.type) have e.preventDefault() called
 
 }(jQuery));

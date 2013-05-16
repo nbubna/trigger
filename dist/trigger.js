@@ -80,7 +80,8 @@
         listen: function(e) {
             var el = e.target, attr,
                 type = e.type,
-                special = _.special[type+(e.which || e.keyCode || '')];
+                key = type.indexOf('key') === 0 ? e.which || e.keyCode || '' : '',
+                special = _.special[type+key];
             if (el && special) {
                 type = special(e, el, el.nodeName.toLowerCase());
                 if (!type){ return; }// special said to ignore it!
@@ -109,7 +110,7 @@
         // special event handlers
         special: {
             click: function(e, el, name) {// if click attr or not editable (i.e. not focusing click)
-                return (_.attr(el, e.type) || 
+                return (_.attr(el, e.type) ||
                         (!el.isContentEditable && !_.noClickRE.test(name) &&
                          (name !== 'input' || _.buttonRE.test(el.type)))) &&
                        'click';
