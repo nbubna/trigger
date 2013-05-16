@@ -211,7 +211,7 @@
         ok($.isFunction(trigger.add), 'require trigger.add() for compatibility');
         var e = _.all(document.body, 'a b:c["d"]#e', {type:'fakeTrigger'}),
             props = 'type target sequence text previousEvent trigger tags constants category'.split(' '),
-            fns = 'stopSequence'.split(' ');
+            fns = 'stopSequence resumeSequence isSequenceStopped'.split(' ');
         for (var i=0,m=props.length; i<m; i++) {
             ok(props[i] in e, 'event should have property "'+props[i]+'"');
         }

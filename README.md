@@ -57,6 +57,7 @@ This will trigger the "validate" and "save" events in sequence.
 Your list of events can be as long as you like. To stop the sequence, catch an event in it
 and call ```event.stopSequence()``` to stop the rest of the specific, declared sequence.
 Then, if you like, you can call ```event.resumeSequence()``` to restart it where you left off.
+And of course, check on the state of things with ```event.isSequenceStopped()```.
 
 
 ### Mediocre: Simplistic Events
