@@ -84,7 +84,7 @@
             var el = e.target, attr,
                 type = e.type,
                 special = _.special[type+(e.which || e.keyCode || '')];
-            if (special) {
+            if (el && special) {
                 type = special(e, el, el.nodeName.toLowerCase());
                 if (!type){ return; }// special said to ignore it!
             }

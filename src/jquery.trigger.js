@@ -8,8 +8,8 @@
     _.fn = $.fn.trigger;
     _.triggerRE = / |\#|\[|\:/;
     $.fn.trigger = function(type) {
-        return !type || typeof type !== "string" || _.triggerRE.test(type) ?
-            this.each(function(){ trigger(this, type || this.getAttribute(_.attr)); }) :
+        return typeof type === "string" && _.triggerRE.test(type) ?
+            this.each(function(){ trigger(this, type); }) :
             _.fn.apply(this, arguments);
     };
 })(jQuery, trigger, trigger._);
