@@ -110,7 +110,7 @@
         // special event handlers
         special: {
             click: function(e, el, name) {// if click attr or not editable (i.e. not focusing click)
-                return (_.attr(el, e.type) ||
+                return (_.attr(el, e.type) || 
                         (!el.isContentEditable && !_.noClickRE.test(name) &&
                          (name !== 'input' || _.buttonRE.test(el.type)))) &&
                        'click';
