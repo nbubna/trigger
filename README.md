@@ -19,65 +19,83 @@ to test.  Your app's ideal javascript would only register listeners for
 events that are meaningful to your specific application (i.e. custom events).
 
 ### Declarative Application Events Are Awesome!
-Add trigger.js to your page, then simply declare what 'click' means
-right there on your elements:
+Add trigger.js to your page, then simply declare what 'click' means in your markup:
 ```html
 <button click="save">Save</button>
 ```
 When the user "clicks" it, a 'save' event is automatically created and dispatched on the element.
 Your application never needs to listen for a click event again.
 
-If translating "click" events is not enough for you,
-you can add other native events as additional triggers:  
+Most people can get by with just declaring the meaning of clicks,
+but you can easily add other native events as additional triggers:  
 ```javascript
-trigger.add('dblclick');
+trigger.add('dblclick');//TODO: add ability to declare trigger="dblclick" on <html>
 ```
 ```html
 <div class="folder" dblclick="open">...</div>
 ```
 
 
-### Dependent Events Are Hard
-Sometimes a single "click" is actually a trigger for a sequence of events.
-This can be handled by registering multiple event listeners in careful order
-or triggering the next event at the completion of the previous one.
-But this can be a fragile, complicated process and is far from declarative and readable.
-It's no fun when you do ```event.stopImmediatePropogation();``` and
-end up cancelling listeners you didn't mean to cancel.
+#### Dependent Events Are Hard
+Sometimes a single "click" serves as a trigger for a sequence of application actions.
+The simpler apps out there just conflate the actions into one ```$(form).click(saveIfValid)```.
+More advanced developers might register multiple listeners for the same event and
+use ```event.stopImmediatePropogation();``` when you need to break the sequence.
+But both approaches (and most varieties of them) are fundamentally hacks to workaround
+you wanting a single event to start a sequence of dependent events. Not easy.
 
 ### Declarative Event Sequences Sequences Are Awesome!
 ```html
 <input type="submit" click="validate save">
 ```
 This will trigger the "validate" and "save" events in sequence.
-Your list of events can be as long as you like. To stop the sequence, catch an event in it
-and call ```event.stopSequence()``` to stop the rest of the specific, declared sequence.
+Your list of events can be as long as you like. Any event handler can just call
+```event.stopSequence()``` to stop the rest of the specific, declared sequence.
 Then, if you like, you can call ```event.resumeSequence()``` to restart it where you left off.
 And of course, check on the state of things with ```event.isSequenceStopped()```.
 
 
-### Mediocre: Simplistic Events
+#### What About Asynchronous Handlers?!
+Once you are used to chaining events into nice declarative sequences,
+you will likely come upon a situation where one of the handlers needs to do something
+asynchronous (e.g. validate something on the server) before the subsequent events are
+triggered. To keep things event-y, you do a manual ```trigger('save');``` call at
+the end of the success callback for your async business.  But this means your nice
+declarative ```<button click="validate save">Save</button>``` element becomes a
+confusing ```<button click="validate">Save</button>```.
+
+### Not A Problem, Friend.
+It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
+on the event (e.g. ```event.stopSequence(promise);```). This stops the event sequence
+and automatically resumes it again once the promise is fulfilled. Now you
+can have your straightforward ```click="validate save"``` button back!
+
+[promise]: http://wiki.commonjs.org/wiki/Promises/A
+
+
+#### Simplistic Events Are Not Simple
 Once you've earned your "Application Events" achievement, you may realize you are only declaring
 events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
 glean information from the context or target element to decipher the full meaning of the event.
+Not to mention that this stuff can easily land you in "use comments to explain" territory.
 Sometimes that simplicity is good, but sometimes it is a real problem.
 
-### Awesome: Rich Events
+### Grammatically Rich Events Are Simply Awesome!
 trigger.js provides a declarative syntax for grammatically rich events.
 This helps you level-up the self-documentation of your javascript and HTML
 and simplify your event listeners.
 
-#### click="category:type" -> event.category
+##### click="category:type" -> event.category
 When you need to distinguish your player's "move" event from that of a different feature,
 prefix your event with a category (subject/noun): ```click="player:move"```.
 Any app-wide 'move' listener can read it from the ```event.category``` property.
 
-#### click="type['constant']" -> event.constants
+##### click="type['constant']" -> event.constants
 To include contextual constants (object/noun) for your event, do: ```click="view['start']"```
 The constant gets the JSON.parse() treatment (after some quote massaging) and
 is set at ```event.constants``` (always in an array, thus the brackets);
 
-#### click="type#tag" -> event.tags
+##### click="type#tag" -> event.tags
 Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
 ```click="move#up#left"``` and listen for these at ```event.tags``` and each ```event[tag]```
 (the individual tags are always given a value of ```true```).
@@ -88,29 +106,12 @@ then you ***must*** put them in this order: ```category:type['constant']#tags```
 Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.
 
 
-### Fail: Asynchronous Handler in an Event Sequence
-Once you are used to chaining events into nice declarative sequences,
-you will likely come upon a situation where one of the handlers needs to do something
-asynchronous (e.g. validate something on the server) before the subsequent events are
-triggered. To keep things event-y, you do a manual ```trigger('save');``` call at
-the end of the success callback for your async business.  But this means your nice
-declarative ```<button click="validate save">Save</button>``` element becomes a
-confusing ```<button click="validate">Save</button>```.
 
-### Awesome: ```event.promise(promise)```
-It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
-on the event (e.g. ```event.stopSequence(promise);```). This stops the event sequence
-and automatically resumes it again once the promise is fulfilled. Now you
-can have your straightforward ```click="validate save"``` button back!
-
-[promise]: http://wiki.commonjs.org/wiki/Promises/A
-
-
-### Small Irritation: HTML Validation
+#### HTML Validation Is A Heavy Burden
 You, of course, understand why [HTML validation is considered harmful][invalid],
-but your pointy-haired boss believes it is a sign of good web design.
+but your pointy-haired boss still labors under the impression that it is a sign of good web design.
 
-### Grudging Workaround: data- prefix
+### Ok, fine, you can have your 'data-' prefix
 ```javascript
 trigger._.prefix = 'data-';
 ```
@@ -120,11 +121,11 @@ trigger._.prefix = 'data-';
 
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
 
-### Huge Irritation: IE < 9
+### But Old IE?!?
 You aren't ready to abandon the poor saps still using ancient versions of IE.
 Sure, Google stopped supporting them, but you aren't Google.
 
-### Relief: jQuery and trigger.old.js
+### Can do.
 Just use jQuery (of course) and this [tiny extension][old]:
 ```html
 <!--[if lt IE lt 9]>
@@ -163,7 +164,7 @@ game.addEventListener('move', function(e) {
    if (player.hasWon()) e.stopSequence();//blocks nextPlayer event
 });
 ```
-
+  
 
 ### Advanced Details
 #### 'click'-ish secrets
@@ -197,7 +198,8 @@ for ```keyup``` and ```click``` events, we didn't have to call ```trigger.add('k
 
 TODO: add more advanced details...
 
-## Release History
+
+#### Release History
 * 2010-04-02 v0.1 (internal)
 * 2012-09-13 v0.3 (internal)
 * 2013-05-03 v0.9.0 (public) - First GitHub release
