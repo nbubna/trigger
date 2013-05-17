@@ -1,4 +1,4 @@
-### Rich, declarative, custom events made awesome.
+##### Rich, declarative, custom events are awesome. Don't know what i'm talking about? Read on...
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: ```npm install trigger```  
@@ -8,25 +8,24 @@ Bower: ```bower install trigger```
 [dev]: https://raw.github.com/nbubna/trigger/master/dist/trigger.js
 [npm]: https://npmjs.org/package/trigger
 
-### Bad: Meaningless Events
-You may have noticed that events like 'click' and 'keyup' are meaningless in regards
-to your application's logic, but i bet you still register listeners for them in your
-application's code.
-What application code actually needs to know is when a particular event means
+#### Meaningless Events Are Lame
+Events like 'click' and 'keyup' are meaningless to the models and logic of most applications,
+but i bet you still register listeners for them in your application's code. This is lame.
+
+Your application code only needs to know what a particular event means
 (e.g. 'save', 'delete', 'next', etc). Cluttering your javascript with browser
 implementation terms like 'click' only make your code less readable and harder
-to test.  Your javascript should ideally only be registering listeners for 
-events that are meaningful (i.e. custom events) to your application.
+to test.  Your app's ideal javascript would only register listeners for 
+events that are meaningful to your specific application (i.e. custom events).
 
-### Awesome: Declarative Application Events
+### Declarative Application Events Are Awesome!
 Add trigger.js to your page, then simply declare what 'click' means
-right there on your element:
+right there on your elements:
 ```html
 <button click="save">Save</button>
 ```
-When the user "clicks" it (or hits 'Enter' while focused), a 'save'
-event is automatically created triggered on the element.
-Your javascript never needs to listen for a click event again.
+When the user "clicks" it, a 'save' event is automatically created and dispatched on the element.
+Your application never needs to listen for a click event again.
 
 If translating "click" events is not enough for you,
 you can add other native events as additional triggers:  
@@ -37,11 +36,8 @@ trigger.add('dblclick');
 <div class="folder" dblclick="open">...</div>
 ```
 
-NOTE: If you want to add events that do not natively bubble as triggers,
-include jQuery (at least the event support) in your page and all shall be well.
 
-
-### Hard: Dependent Events
+### Dependent Events Are Hard
 Sometimes a single "click" is actually a trigger for a sequence of events.
 This can be handled by registering multiple event listeners in careful order
 or triggering the next event at the completion of the previous one.
@@ -49,7 +45,7 @@ But this can be a fragile, complicated process and is far from declarative and r
 It's no fun when you do ```event.stopImmediatePropogation();``` and
 end up cancelling listeners you didn't mean to cancel.
 
-### Awesome: Declarative Event Sequences
+### Declarative Event Sequences Sequences Are Awesome!
 ```html
 <input type="submit" click="validate save">
 ```
