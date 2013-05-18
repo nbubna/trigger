@@ -44,7 +44,7 @@ use ```event.stopImmediatePropogation();``` when you need to break the sequence.
 But both approaches (and most varieties of them) are fundamentally hacks to workaround
 you wanting a single event to start a sequence of dependent events. Not easy.
 
-### Declarative Event Sequences Sequences Are Awesome!
+### Declaring Event Sequences Is Awesome!
 ```html
 <input type="submit" click="validate save">
 ```
@@ -107,8 +107,8 @@ Think of it as subject, verb, object, adjectives and you probably won't forget h
 
 
 
-#### HTML Validation Is A Heavy Burden
-You, of course, understand why [HTML validation is considered harmful][invalid],
+#### But HTML Validation?!
+You probably understand why [HTML validation is considered harmful][invalid],
 but your pointy-haired boss still labors under the impression that it is a sign of good web design.
 
 ### Ok, fine, you can have your 'data-' prefix
@@ -147,21 +147,21 @@ allows you to do ```$('#foo').trigger('foo:squish#gooey');``` instead of
 ### Mini-Example, Just For Fun
 ```html
 <div id="#chutesAndLadders">
- <input type="dice" name="roll">
- <button click="move#up nextPlayer">Climb</button>  
- <button click="move#down nextPlayer">Slide</button>
+  <input type="dice" name="roll">
+  <button click="move#up nextPlayer">Climb</button>  
+  <button click="move#down nextPlayer">Slide</button>
 </div>
 ```
 ```javascript
 var game = document.querySelector('#chutesAndLadders');
 game.addEventListener('nextPlayer', function() {
-    player = player.next;
+  player = player.next;
 });
 game.addEventListener('move', function(e) {
-   var distance = game.querySelector('[name=roll]').value;
-   if (e.up) player.climb(distance);
-   if (e.down) player.slide(distance);
-   if (player.hasWon()) e.stopSequence();//blocks nextPlayer event
+  var distance = game.querySelector('[name=roll]').value;
+  if (e.up) player.climb(distance);
+  if (e.down) player.slide(distance);
+  if (player.hasWon()) e.stopSequence();//blocks nextPlayer event
 });
 ```
   
@@ -189,8 +189,8 @@ aid for tweaking events that have a 'which' or 'keyCode' important to you. Here'
 ```
 ```javascript
 $.extend(trigger._.special, {
-    keyup27: function(e){ return 'key-esc'; },
-    keyup46: function(e){ return 'key-del'; }
+  keyup27: function(e){ return 'key-esc'; },
+  keyup46: function(e){ return 'key-del'; }
 });
 ```
 Notice that ```key-enter``` is already supported, and, because trigger.js already listens
