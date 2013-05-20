@@ -1,8 +1,8 @@
 ##### Rich, declarative, custom events are awesome. Don't know what i'm talking about? Read on...
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
-[NPM][npm]: ```npm install trigger```  
-Bower: ```bower install trigger```  
+[NPM][npm]: `npm install trigger`  
+Bower: `bower install trigger`  
 
 [prod]: https://raw.github.com/nbubna/trigger/master/dist/trigger.min.js
 [dev]: https://raw.github.com/nbubna/trigger/master/dist/trigger.js
@@ -13,10 +13,8 @@ Events like 'click' and 'keyup' are meaningless to the models and logic of most 
 but i bet you still register listeners for them in your application's code. This is lame.
 
 Your application code only needs to know what a particular event means
-(e.g. 'save', 'delete', 'next', etc). Cluttering your javascript with browser
-implementation terms like 'click' only make your code less readable and harder
-to test.  Your app's ideal javascript would only register listeners for 
-events that are meaningful to your specific application (i.e. custom events).
+(e.g. 'save', 'delete', 'next', etc). Your app's ideal javascript would only
+register listeners for events that are meaningful to your specific application (i.e. custom events).
 
 ### Declarative Application Events Are Awesome!
 Add trigger.js to your page, then simply declare what 'click' means in your markup:
@@ -38,9 +36,9 @@ trigger.add('dblclick');//TODO: add ability to declare trigger="dblclick" on <ht
 
 #### Dependent Events Are Hard
 Sometimes a single "click" serves as a trigger for a sequence of application actions.
-The simpler apps out there just conflate the actions into one ```$(form).click(saveIfValid)```.
+The simpler apps out there just conflate the actions into one `$(form).click(saveIfValid)`.
 More advanced developers might register multiple listeners for the same event and
-use ```event.stopImmediatePropogation();``` when you need to break the sequence.
+use `event.stopImmediatePropogation();` when you need to break the sequence.
 But both approaches (and most varieties of them) are fundamentally hacks to workaround
 you wanting a single brower event to start a sequence of application events.
 There is a better way...
@@ -51,25 +49,25 @@ There is a better way...
 ```
 This will trigger the "validate" and "save" events in sequence.
 Your list of events can be as long as you like. Any event handler can just call
-```event.stopSequence()``` to stop the rest of the specific, declared sequence.
-Then, if you like, you can call ```event.resumeSequence()``` to restart it where you left off.
-And of course, check on the state of things with ```event.isSequenceStopped()```.
+`event.stopSequence()` to stop the rest of the specific, declared sequence.
+Then, if you like, you can call `event.resumeSequence()` to restart it where you left off.
+And of course, check on the state of things with `event.isSequenceStopped()`.
 
 
 #### What About Asynchronous Handlers?!
 Once you are used to chaining events into nice declarative sequences,
 you will likely come upon a situation where one of the handlers needs to do something
 asynchronous (e.g. validate something on the server) before the subsequent events are
-triggered. To keep things event-y, you do a manual ```trigger('save');``` call at
+triggered. To keep things event-y, you do a manual `trigger('save');` call at
 the end of the success callback for your async business.  But this means your nice
-declarative ```<button click="validate save">Save</button>``` element becomes a
-confusing ```<button click="validate">Save</button>```.
+declarative `<button click="validate save">Save</button>` element becomes a
+confusing `<button click="validate">Save</button>`.
 
 ### Not A Problem, Friend.
-It's easy, get yourself a [promise][] in that ```validate``` event handler and set it
-on the event (e.g. ```event.stopSequence(promise);```). This stops the event sequence
+It's easy, get yourself a [promise][] in that `validate` event handler and set it
+on the event (e.g. `event.stopSequence(promise);`). This stops the event sequence
 and automatically resumes it again once the promise is fulfilled. Now you
-can have your straightforward ```click="validate save"``` button back!
+can have your straightforward `click="validate save"` button back!
 
 [promise]: http://wiki.commonjs.org/wiki/Promises/A
 
@@ -88,22 +86,22 @@ and simplify your event listeners.
 
 ##### click="category:type" -> event.category
 When you need to distinguish your player's "move" event from that of a different feature,
-prefix your event with a category (subject/noun): ```click="player:move"```.
-Any app-wide 'move' listener can read it from the ```event.category``` property.
+prefix your event with a category (subject/noun): `click="player:move"`.
+Any app-wide 'move' listener can read it from the `event.category` property.
 
 ##### click="type['constant']" -> event.constants
-To include contextual constants (object/noun) for your event, do: ```click="view['start']"```
+To include contextual constants (object/noun) for your event, do: `click="view['start']"`
 The constant gets the JSON.parse() treatment (after some quote massaging) and
-is set at ```event.constants``` (always in an array, thus the brackets);
+is set at `event.constants` (always in an array, thus the brackets);
 
 ##### click="type#tag" -> event.tags
 Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
-```click="move#up#left"``` and listen for these at ```event.tags``` and each ```event[tag]```
-(the individual tags are always given a value of ```true```).
+`click="move#up#left"` and listen for these at `event.tags` and each `event[tag]`
+(the individual tags are always given a value of `true`).
 
 NOTE: If you have a reason to use combinations of all three (probably rare),
-then you ***must*** put them in this order: ```category:type['constant']#tags```
-(e.g. ```click="player:move[{'speed':2}]#west"```).
+then you ***must*** put them in this order: `category:type['constant']#tags`
+(e.g. `click="player:move[{'speed':2}]#west"`).
 Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.
 
 
@@ -122,7 +120,7 @@ trigger._.prefix = 'data-';
 
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
 
-### But Old IE?!?
+#### But Old IE?!?
 You aren't ready to abandon the poor saps still using ancient versions of IE.
 Sure, Google stopped supporting them, but you aren't Google.
 
@@ -139,10 +137,21 @@ Just use jQuery (of course) and this [tiny extension][old]:
 ### Another Small Extension
 If you see yourself manually using trigger instead of always letting browser events
 serve as triggers and also happen to be fond of jQuery, [jquery.trigger.js][jquery]
-allows you to do ```$('#foo').trigger('foo:squish#gooey');``` instead of
-```trigger($('#foo')[0], 'foo:squish#gooey');```.
+allows you to do `$('#foo').trigger('foo:squish#gooey');` instead of
+`trigger($('#foo')[0], 'foo:squish#gooey');`.
 
 [jquery]: https://raw.github.com/nbubna/trigger/master/src/jquery.trigger.js
+
+#### Short jQuery Version - For Those Who Don't Need All The Features
+```javascript
+$(document).on('click', function(e) {
+  var $el = $(e.target).closest('[click]'),
+      events = $el.attr('click') || '';
+  events.split(' ').forEach(function(event) {
+    $el.trigger(event);
+  });
+});
+```
 
 
 ### Mini-Example, Just For Fun
@@ -194,8 +203,8 @@ $.extend(trigger._.special, {
   keyup46: function(e){ return 'key-del'; }
 });
 ```
-Notice that ```key-enter``` is already supported, and, because trigger.js already listens
-for ```keyup``` and ```click``` events, we didn't have to call ```trigger.add('keyup');```.
+Notice that `key-enter` is already supported, and, because trigger.js already listens
+for `keyup` and `click` events, we didn't have to call `trigger.add('keyup');`.
 
 TODO: add more advanced details...
 
