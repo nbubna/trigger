@@ -18,6 +18,7 @@ module.exports = function(grunt) {
     concat: {
       options: {
         banner: '<%= banner %>',
+        process: true,
         stripBanners: true
       },
       dist: {
@@ -54,6 +55,12 @@ module.exports = function(grunt) {
         },
         src: ['src/**/*.js']
       },
+      dist: {
+        options: {
+          jshintrc: 'src/.jshintrc'
+        },
+        src: ['dist/**/*.js']
+      }
       test: {
         options: {
           jshintrc: 'test/.jshintrc'
@@ -84,8 +91,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-release');
 
-  // Default task.
-  grunt.registerTask('default', ['jshint', 'qunit', 'clean', 'concat', 'uglify']);
+  // Tasks
+  grunt.registerTask('test', ['clean', 'concat', 'jshint','qunit']);
+  grunt.registerTask('default', ['test', 'uglify']);
 
 };
