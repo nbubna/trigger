@@ -28,6 +28,10 @@
     "url": "http://github.com/nbubna/trigger/issues",
     "email": "nathan@esharesearch.com"
   },
+  "repository": {
+    "type" : "git",
+    "url" : "http://github.com/nbubna/trigger.git"
+  },
   "licenses": [
     {
       "type": "MIT",
