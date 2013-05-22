@@ -1,4 +1,4 @@
-/*! trigger - v1.0.0 - 2013-05-21
+/*! trigger - v1.1.0 - 2013-05-22
 * Copyright (c) 2013 ESHA Research; Licensed MIT, GPL */
 ;(function(window, document, $) {
 
@@ -6,7 +6,7 @@
     trigger.add = function(){ return _.add.apply(this, arguments); };
 
     var _ = trigger._ = {
-        version: "1.0.0",
+        version: "1.1.0",
         prefix: 'data-',// will change to '' if !<html data-trigger="true" ...>
         splitRE: / (?![^\[\]]*\])+/g,
         noClickRE: /^(select|textarea)$/,
