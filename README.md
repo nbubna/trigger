@@ -26,11 +26,10 @@ Your application never needs to listen for a click event again.
 
 Most people can get by with just declaring the meaning of clicks,
 but you can easily add other native events as additional triggers:  
-```javascript
-trigger.add('dblclick');//TODO: add ability to declare trigger="dblclick" on <html>
-```
 ```html
-<div class="folder" dblclick="open">...</div>
+<html trigger-add="dblclick drop">
+...
+<div class="folder" dblclick="open" drop="move">...</div>
 ```
 
 
@@ -108,13 +107,12 @@ Think of it as subject, verb, object, adjectives and you probably won't forget h
 
 #### But HTML Validation?!
 You probably understand why [HTML validation is considered harmful][invalid],
-but your pointy-haired boss still labors under the impression that it is a sign of good web design.
+but your pointy-haired boss still labors under the naive impression that it is a best practice.
 
 ### Ok, fine, you can have your 'data-' prefix
-```javascript
-trigger._.prefix = 'data-';
-```
 ```html
+<html data-trigger="true" data-trigger-add="dblclick">
+...
 <button data-click="lame">"validate this"</button>
 ```
 
@@ -127,7 +125,7 @@ Sure, Google stopped supporting them, but you aren't Google.
 ### Can do.
 Just use jQuery (of course) and this [tiny extension][old]:
 ```html
-<!--[if lt IE lt 9]>
+<!--[if lt IE 9]>
   <script src="../src/trigger.old.js"></script>
 <![endif]-->
 ```
@@ -149,6 +147,7 @@ $(document).on('click', function(e) {
       events = $el.attr('click') || '';
   events.split(' ').forEach(function(event) {
     $el.trigger(event);
+    if (!$(e.target).is('[type=radio],[type=checkbox]')) e.preventDefault();
   });
 });
 ```
@@ -163,7 +162,7 @@ $(document).on('click', function(e) {
 </div>
 ```
 ```javascript
-var game = document.querySelector('#chutesAndLadders');
+var game = document.querySelector('#dungeonPlunge');
 game.addEventListener('nextPlayer', function() {
   player = player.next;
 });
@@ -182,7 +181,7 @@ game.addEventListener('move', function(e) {
 have a click attribute itself, but was a child of an element that did have one.
  * Enter keyups (keyCode:13) are treated as clicks if their target lacks a "native response"
 to such events (e.g. in a textarea, it adds a new line, or on a link, it causes a click).
-The exception being if such an element has a keyup attribute declared on it.
+The exception being if such an element has a `keyup` or `key-enter` attribute declared on it.
  * When a click is used by trigger.js, it will automatically prevent the original event's
 default behavior, except in the case of radio buttons and checkboxes. The assumption is
 that the default behavior is replaced by the declared event sequence.
@@ -203,8 +202,8 @@ $.extend(trigger._.special, {
   keyup46: function(e){ return 'key-del'; }
 });
 ```
-Notice that `key-enter` is already supported, and, because trigger.js already listens
-for `keyup` and `click` events, we didn't have to call `trigger.add('keyup');`.
+Note: trigger.js already listens for `keyup` and `click` events. For other special events,
+like keydown or dblclick, remember to do `<html trigger-add="keydown">` or the like.
 
 TODO: add more advanced details...
 

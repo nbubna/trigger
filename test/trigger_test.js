@@ -336,4 +336,20 @@
 
     //TODO: test that clicks on !_.boxRE(el.type) have e.preventDefault() called
 
+    module('trigger-add');
+    test('<html trigger-add="foo dblclick">', function() {
+        listenFor('triggerWasFoo', { usejQuery: true });
+        $('<span foo="triggerWasFoo">').appendTo('body').trigger('foo');
+        if (document.createEvent) {
+            listenFor('triggerWasDblClick', {});
+            var e = document.createEvent('UIEvents');
+            e.initEvent('dblclick', true, true);
+            $('<div dblclick="triggerWasDblClick">').appendTo('body')[0].dispatchEvent(e);
+        }
+    });
+    test('trigger.add("bar")', function() {
+        listenFor('triggerWasBar', { usejQuery: true });
+        $('<button bar="triggerWasBar">').appendTo('body').trigger('bar');
+    });
+
 }(jQuery));

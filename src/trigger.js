@@ -10,8 +10,8 @@
     trigger.add = function(){ return _.add.apply(this, arguments); };
 
     var _ = trigger._ = {
-        version: "1.0.0",
-        prefix: '',
+        version: "<%= pkg.version %>",
+        prefix: 'data-',// will change to '' if !<html data-trigger="true" ...>
         splitRE: / (?![^\[\]]*\])+/g,
         noClickRE: /^(select|textarea)$/,
         noEnterRE: /^(textarea|button)$/,
@@ -42,9 +42,7 @@
             props.stopSequence = function(promise) {
                 if (stopped !== false) {// after resume, can't stop again
                     stopped = true;
-                    if (promise) {
-                        return promise.then(this.resumeSequence);
-                    }
+                    return promise && promise.then(this.resumeSequence);
                 }
             };
             props.isSequenceStopped = function(){ return !!stopped; };
@@ -100,13 +98,14 @@
             }
         },
         on: function(type, fn) {
-            if (_.on[type]){ return; } else { _.on[type] = 1; }// no dupes!
-            // support jQuery for fake triggers, but must consume originalEvent when present!
-            if ($ && $.event){ $(document).on(type, function(e){ fn(e.originalEvent||e); }); }
-            else { document.addEventListener(type, fn); }
+            if (!_.on[type]) {// no dupes!
+                _.on[type] = fn;
+                if ($ && $.event){ $(document).on(type, fn); }// allows non-native triggers
+                else { document.addEventListener(type, fn); }
+            }
         },
         attr: function(el, type) {
-            return el && el.getAttribute && el.getAttribute(_.prefix+type);
+            return (el && el.getAttribute && el.getAttribute(_.prefix+type))||'';
         },
         find: function(el, type) {
             return !el || _.attr(el, type) ? el : _.find(el.parentNode, type);
@@ -130,7 +129,7 @@
         // extension hooks
         manual: function(el, sequence) {
             if (typeof el === "string"){ sequence = el; el = document; }
-            return _.all(el, sequence || _.attr(el, 'click') || '');
+            return _.all(el, sequence || _.attr(el, 'click'));
         },
         add: function() {
             for (var i=0,m=arguments.length; i<m; i++){ _.on(arguments[i], _.listen); }
@@ -141,13 +140,19 @@
                 $.event.props.push(prop);
             }
             return prop;
+        },
+        init: function() {
+            _.add('click','keyup');
+            var el = document.documentElement;
+            if (_.attr(el, 'trigger') !== 'true'){ _.prefix = ''; }
+            _.add.apply(_, _.attr(el, 'trigger-add').split(' '));
         }
     };
     // connect to the outside world
+    _.init();
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = trigger;
     } else {
         window.trigger = trigger;
     }
-    trigger.add('click', 'keyup');
 })(window, document, window.jQuery);
