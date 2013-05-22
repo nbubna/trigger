@@ -122,7 +122,7 @@ but your pointy-haired boss still labors under the naive impression that it is a
 You aren't ready to abandon the poor saps still using ancient versions of IE.
 Sure, Google stopped supporting them, but you aren't Google.
 
-### Can do.
+#### Can do.
 Just use jQuery (of course) and this [tiny extension][old]:
 ```html
 <!--[if lt IE 9]>
@@ -132,13 +132,15 @@ Just use jQuery (of course) and this [tiny extension][old]:
 
 [old]: https://raw.github.com/nbubna/trigger/master/src/trigger.old.js
 
-### Another Small Extension
+
+#### Another Small Extension
 If you see yourself manually using trigger instead of always letting browser events
 serve as triggers and also happen to be fond of jQuery, [jquery.trigger.js][jquery]
 allows you to do `$('#foo').trigger('foo:squish#gooey');` instead of
 `trigger($('#foo')[0], 'foo:squish#gooey');`.
 
 [jquery]: https://raw.github.com/nbubna/trigger/master/src/jquery.trigger.js
+
 
 #### Short jQuery Version - For Those Who Don't Need All The Features
 ```javascript
@@ -153,7 +155,7 @@ $(document).on('click', function(e) {
 ```
 
 
-### Mini-Example, Just For Fun
+#### Mini-Example, Just For Fun
 ```html
 <div id="#chutesAndLadders">
   <input type="dice" name="roll">
@@ -176,7 +178,7 @@ game.addEventListener('move', function(e) {
   
 
 ### Advanced Details
-#### 'click'-ish secrets
+##### 'click'-ish secrets
  * Clicks are ignored if their target was a user-editable field (e.g. textarea) that did not
 have a click attribute itself, but was a child of an element that did have one.
  * Enter keyups (keyCode:13) are treated as clicks if their target lacks a "native response"
@@ -186,7 +188,7 @@ The exception being if such an element has a `keyup` or `key-enter` attribute de
 default behavior, except in the case of radio buttons and checkboxes. The assumption is
 that the default behavior is replaced by the declared event sequence.
 
-#### trigger._.special
+##### trigger._.special
 This extension hook provides you the opportunity to change event types, with some particular
 aid for tweaking events that have a 'which' or 'keyCode' important to you. Here's an example:
 
