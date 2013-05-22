@@ -213,3 +213,4 @@ TODO: add more advanced details...
 * 2012-09-13 v0.3 (internal)
 * 2013-05-03 v0.9.0 (public) - First GitHub release
 * 2013-05-16 v1.0.0 (public) - tests and feature completeness
+* 2013-05-21 v1.1.0 (public) - declarative configuration
