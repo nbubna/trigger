@@ -62,7 +62,7 @@ the end of the success callback for your async business.  But this means your ni
 declarative `<button click="validate save">Save</button>` element becomes a
 confusing `<button click="validate">Save</button>`.
 
-### Not A Problem, Friend.
+### Promises Are Accepted Here
 It's easy, get yourself a [promise][] in that `validate` event handler and set it
 on the event (e.g. `event.stopSequence(promise);`). This stops the event sequence
 and automatically resumes it again once the promise is fulfilled. Now you
@@ -71,11 +71,11 @@ can have your straightforward `click="validate save"` button back!
 [promise]: http://wiki.commonjs.org/wiki/Promises/A
 
 
-#### Simplistic Events Are Not Simple
+#### Simplistic Events Are Not Always Simple
 Once you've earned your "Application Events" achievement, you may realize you are only declaring
 events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
 glean information from the context or target element to decipher the full meaning of the event.
-Not to mention that this stuff can easily land you in "use comments to explain" territory.
+This can easily lead you away from descriptive code and into "use comments to explain" territory.
 Sometimes that simplicity is good, but sometimes it is a real problem.
 
 ### Grammatically Rich Events Are Simply Awesome!
@@ -88,12 +88,12 @@ When you need to distinguish your player's "move" event from that of a different
 prefix your event with a category (subject/noun): `click="player:move"`.
 Any app-wide 'move' listener can read it from the `event.category` property.
 
-##### click="type['constant']" -> event.constants
+##### click="type['constant','other']" -> event.constants
 To include contextual constants (object/noun) for your event, do: `click="view['start']"`
 The constant gets the JSON.parse() treatment (after some quote massaging) and
 is set at `event.constants` (always in an array, thus the brackets);
 
-##### click="type#tag" -> event.tags
+##### click="type#tag" -> event.tags & event[tag]
 Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
 `click="move#up#left"` and listen for these at `event.tags` and each `event[tag]`
 (the individual tags are always given a value of `true`).
@@ -113,7 +113,7 @@ but your pointy-haired boss still labors under the naive impression that it is a
 ```html
 <html data-trigger="true" data-trigger-add="dblclick">
 ...
-<button data-click="lame">"validate this"</button>
+<button data-click="validateHTML">"be lame"</button>
 ```
 
 [invalid]: http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html
@@ -157,7 +157,7 @@ $(document).on('click', function(e) {
 
 #### Mini-Example, Just For Fun
 ```html
-<div id="#chutesAndLadders">
+<div id="#dungeonPlunge">
   <input type="dice" name="roll">
   <button click="move#up nextPlayer">Climb</button>  
   <button click="move#down nextPlayer">Slide</button>
@@ -216,3 +216,4 @@ TODO: add more advanced details...
 * 2013-05-03 v0.9.0 (public) - First GitHub release
 * 2013-05-16 v1.0.0 (public) - tests and feature completeness
 * 2013-05-21 v1.1.0 (public) - declarative configuration
+* 2013-05-22 v1.1.1 (public) - fix build problem
