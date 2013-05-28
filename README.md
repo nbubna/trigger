@@ -3,7 +3,9 @@
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
 [NPM][npm]: `npm install trigger`  
 Bower: `bower install trigger`  
+[NuGet][]: `Install-Package trigger`  
 
+[NuGet]: http://nuget.org/packages/trigger/
 [prod]: https://raw.github.com/nbubna/trigger/master/dist/trigger.min.js
 [dev]: https://raw.github.com/nbubna/trigger/master/dist/trigger.js
 [npm]: https://npmjs.org/package/trigger
