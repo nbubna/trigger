@@ -41,7 +41,7 @@ The simpler apps out there just conflate the actions into one `$(form).click(sav
 More advanced developers might register multiple listeners for the same event and
 use `event.stopImmediatePropogation();` when you need to break the sequence.
 But both approaches (and most varieties of them) are fundamentally hacks to workaround
-you wanting a single brower event to start a sequence of application events.
+you wanting a single browser event to start a sequence of application events.
 There is a better way...
 
 ### Declaring Event Sequences Is Awesome!
