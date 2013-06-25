@@ -1,8 +1,8 @@
-##### Rich, declarative, custom events are awesome. Don't know what i'm talking about? Read on...
+##### Because custom events should be easy...
 
 Download: [trigger.min.js][prod]  or  [trigger.js][dev]  
-[NPM][npm]: `npm install trigger`  
 Bower: `bower install trigger`  
+[NPM][npm]: `npm install trigger`  
 [NuGet][]: `Install-Package trigger`  
 
 [NuGet]: http://nuget.org/packages/trigger/
@@ -18,13 +18,14 @@ Your application code only needs to know what a particular event means
 (e.g. 'save', 'delete', 'next', etc). Your app's ideal javascript would only
 register listeners for events that are meaningful to your specific application (i.e. custom events).
 
-### Declarative Application Events Are Awesome!
+### Declarative Application Events Are Better
 Add trigger.js to your page, then simply declare what 'click' means in your markup:
 ```html
 <button click="save">Save</button>
 ```
 When the user "clicks" it, a 'save' event is automatically created and dispatched on the element.
-Your application never needs to listen for a click event again.
+Your application never needs to listen for a click event again. This makes your JavaScript more
+readable and your HTML more self-explanatory.
 
 Most people can get by with just declaring the meaning of clicks,
 but you can easily add other native events as additional triggers:  
@@ -35,7 +36,7 @@ but you can easily add other native events as additional triggers:
 ```
 
 
-#### Dependent Events Are Hard
+#### Dependent Events Are Tricky
 Sometimes a single "click" serves as a trigger for a sequence of application actions.
 The simpler apps out there just conflate the actions into one `$(form).click(saveIfValid)`.
 More advanced developers might register multiple listeners for the same event and
@@ -44,7 +45,7 @@ But both approaches (and most varieties of them) are fundamentally hacks to work
 you wanting a single browser event to start a sequence of application events.
 There is a better way...
 
-### Declaring Event Sequences Is Awesome!
+### Declaring Event Sequences Is Easy
 ```html
 <input type="submit" click="validate save">
 ```
@@ -55,7 +56,7 @@ Then, if you like, you can call `event.resumeSequence()` to restart it where you
 And of course, check on the state of things with `event.isSequenceStopped()`.
 
 
-#### What About Asynchronous Handlers?!
+#### Asynchronous Handlers Make Messes
 Once you are used to chaining events into nice declarative sequences,
 you will likely come upon a situation where one of the handlers needs to do something
 asynchronous (e.g. validate something on the server) before the subsequent events are
@@ -64,7 +65,7 @@ the end of the success callback for your async business.  But this means your ni
 declarative `<button click="validate save">Save</button>` element becomes a
 confusing `<button click="validate">Save</button>`.
 
-### Promises Are Accepted Here
+### Promise-Friendly Event Sequences Are Clean And Tidy
 It's easy, get yourself a [promise][] in that `validate` event handler and set it
 on the event (e.g. `event.stopSequence(promise);`). This stops the event sequence
 and automatically resumes it again once the promise is fulfilled. Now you
@@ -73,14 +74,14 @@ can have your straightforward `click="validate save"` button back!
 [promise]: http://wiki.commonjs.org/wiki/Promises/A
 
 
-#### Simplistic Events Are Not Always Simple
+#### Simplistic Events Can Be Awkward
 Once you've earned your "Application Events" achievement, you may realize you are only declaring
 events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
 glean information from the context or target element to decipher the full meaning of the event.
 This can easily lead you away from descriptive code and into "use comments to explain" territory.
 Sometimes that simplicity is good, but sometimes it is a real problem.
 
-### Grammatically Rich Events Are Simply Awesome!
+### Grammatically Rich Events Can Be Graceful
 trigger.js provides a declarative syntax for grammatically rich events.
 This helps you level-up the self-documentation of your javascript and HTML
 and simplify your event listeners.
