@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Trigger : Superior events for single page web apps." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Trigger</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/nbubna/trigger">View on GitHub</a>
+
+          <h1 id="project_title">Trigger</h1>
+          <h2 id="project_tagline">Superior events for single page web apps.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/nbubna/trigger/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/nbubna/trigger/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h5>
+<a name="because-custom-events-should-be-easy" class="anchor" href="#because-custom-events-should-be-easy"><span class="octicon octicon-link"></span></a>Because custom events should be easy...</h5>
+
+<p>Download: <a href="https://raw.github.com/nbubna/trigger/master/dist/trigger.min.js">trigger.min.js</a>  or  <a href="https://raw.github.com/nbubna/trigger/master/dist/trigger.js">trigger.js</a><br>
+Bower: <code>bower install trigger</code><br><a href="https://npmjs.org/package/trigger">NPM</a>: <code>npm install trigger</code><br><a href="http://nuget.org/packages/trigger/">NuGet</a>: <code>Install-Package trigger</code>  </p>
+
+<h4>
+<a name="meaningless-events-are-lame" class="anchor" href="#meaningless-events-are-lame"><span class="octicon octicon-link"></span></a>Meaningless Events Are Lame</h4>
+
+<p>Events like 'click' and 'keyup' are meaningless to the models and logic of most applications,
+but i bet you still register listeners for them in your application's code. This is lame.</p>
+
+<p>Your application code only needs to know what a particular event means
+(e.g. 'save', 'delete', 'next', etc). Your app's ideal javascript would only
+register listeners for events that are meaningful to your specific application (i.e. custom events).</p>
+
+<h3>
+<a name="declarative-application-events-are-better" class="anchor" href="#declarative-application-events-are-better"><span class="octicon octicon-link"></span></a>Declarative Application Events Are Better</h3>
+
+<p>Add trigger.js to your page, then simply declare what 'click' means in your markup:</p>
+
+<div class="highlight"><pre><span class="nt">&lt;button</span> <span class="na">click=</span><span class="s">"save"</span><span class="nt">&gt;</span>Save<span class="nt">&lt;/button&gt;</span>
+</pre></div>
+
+<p>When the user "clicks" it, a 'save' event is automatically created and dispatched on the element.
+Your application never needs to listen for a click event again. This makes your JavaScript more
+readable and your HTML more self-explanatory.</p>
+
+<p>Most people can get by with just declaring the meaning of clicks,
+but you can easily add other native events as additional triggers:  </p>
+
+<div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">trigger-add=</span><span class="s">"dblclick drop"</span><span class="nt">&gt;</span>
+...
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"folder"</span> <span class="na">dblclick=</span><span class="s">"open"</span> <span class="na">drop=</span><span class="s">"move"</span><span class="nt">&gt;</span>...<span class="nt">&lt;/div&gt;</span>
+</pre></div>
+
+<h4>
+<a name="dependent-events-are-tricky" class="anchor" href="#dependent-events-are-tricky"><span class="octicon octicon-link"></span></a>Dependent Events Are Tricky</h4>
+
+<p>Sometimes a single "click" serves as a trigger for a sequence of application actions.
+The simpler apps out there just conflate the actions into one <code>$(form).click(saveIfValid)</code>.
+More advanced developers might register multiple listeners for the same event and
+use <code>event.stopImmediatePropogation();</code> when you need to break the sequence.
+But both approaches (and most varieties of them) are fundamentally hacks to workaround
+you wanting a single browser event to start a sequence of application events.
+There is a better way...</p>
+
+<h3>
+<a name="declaring-event-sequences-is-easy" class="anchor" href="#declaring-event-sequences-is-easy"><span class="octicon octicon-link"></span></a>Declaring Event Sequences Is Easy</h3>
+
+<div class="highlight"><pre><span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">click=</span><span class="s">"validate save"</span><span class="nt">&gt;</span>
+</pre></div>
+
+<p>This will trigger the "validate" and "save" events in sequence.
+Your list of events can be as long as you like. Any event handler can just call
+<code>event.stopSequence()</code> to stop the rest of the specific, declared sequence.
+Then, if you like, you can call <code>event.resumeSequence()</code> to restart it where you left off.
+And of course, check on the state of things with <code>event.isSequenceStopped()</code>.</p>
+
+<h4>
+<a name="asynchronous-handlers-make-messes" class="anchor" href="#asynchronous-handlers-make-messes"><span class="octicon octicon-link"></span></a>Asynchronous Handlers Make Messes</h4>
+
+<p>Once you are used to chaining events into nice declarative sequences,
+you will likely come upon a situation where one of the handlers needs to do something
+asynchronous (e.g. validate something on the server) before the subsequent events are
+triggered. To keep things event-y, you do a manual <code>trigger('save');</code> call at
+the end of the success callback for your async business.  But this means your nice
+declarative <code>&lt;button click="validate save"&gt;Save&lt;/button&gt;</code> element becomes a
+confusing <code>&lt;button click="validate"&gt;Save&lt;/button&gt;</code>.</p>
+
+<h3>
+<a name="promise-friendly-event-sequences-are-clean-and-tidy" class="anchor" href="#promise-friendly-event-sequences-are-clean-and-tidy"><span class="octicon octicon-link"></span></a>Promise-Friendly Event Sequences Are Clean And Tidy</h3>
+
+<p>It's easy, get yourself a <a href="http://wiki.commonjs.org/wiki/Promises/A">promise</a> in that <code>validate</code> event handler and set it
+on the event (e.g. <code>event.stopSequence(promise);</code>). This stops the event sequence
+and automatically resumes it again once the promise is fulfilled. Now you
+can have your straightforward <code>click="validate save"</code> button back!</p>
+
+<h4>
+<a name="simplistic-events-can-be-awkward" class="anchor" href="#simplistic-events-can-be-awkward"><span class="octicon octicon-link"></span></a>Simplistic Events Can Be Awkward</h4>
+
+<p>Once you've earned your "Application Events" achievement, you may realize you are only declaring
+events as disconnected verbs or nouns, or maybe awkward verbNouns. Your listeners have to
+glean information from the context or target element to decipher the full meaning of the event.
+This can easily lead you away from descriptive code and into "use comments to explain" territory.
+Sometimes that simplicity is good, but sometimes it is a real problem.</p>
+
+<h3>
+<a name="grammatically-rich-events-can-be-graceful" class="anchor" href="#grammatically-rich-events-can-be-graceful"><span class="octicon octicon-link"></span></a>Grammatically Rich Events Can Be Graceful</h3>
+
+<p>trigger.js provides a declarative syntax for grammatically rich events.
+This helps you level-up the self-documentation of your javascript and HTML
+and simplify your event listeners.</p>
+
+<h5>
+<a name="clickcategorytype---eventcategory" class="anchor" href="#clickcategorytype---eventcategory"><span class="octicon octicon-link"></span></a>click="category:type" -&gt; event.category</h5>
+
+<p>When you need to distinguish your player's "move" event from that of a different feature,
+prefix your event with a category (subject/noun): <code>click="player:move"</code>.
+Any app-wide 'move' listener can read it from the <code>event.category</code> property.</p>
+
+<h5>
+<a name="clicktypeconstantother---eventconstants" class="anchor" href="#clicktypeconstantother---eventconstants"><span class="octicon octicon-link"></span></a>click="type['constant','other']" -&gt; event.constants</h5>
+
+<p>To include contextual constants (object/noun) for your event, do: <code>click="view['start']"</code>
+The constant gets the JSON.parse() treatment (after some quote massaging) and
+is set at <code>event.constants</code> (always in an array, thus the brackets);</p>
+
+<h5>
+<a name="clicktypetag---eventtags--eventtag" class="anchor" href="#clicktypetag---eventtags--eventtag"><span class="octicon octicon-link"></span></a>click="type#tag" -&gt; event.tags &amp; event[tag]</h5>
+
+<p>Finally, you can add simple tags (adjectives/adverbs) to your events, each prefixed by '#':
+<code>click="move#up#left"</code> and listen for these at <code>event.tags</code> and each <code>event[tag]</code>
+(the individual tags are always given a value of <code>true</code>).</p>
+
+<p>NOTE: If you have a reason to use combinations of all three (probably rare),
+then you <strong><em>must</em></strong> put them in this order: <code>category:type['constant']#tags</code>
+(e.g. <code>click="player:move[{'speed':2}]#west"</code>).
+Think of it as subject, verb, object, adjectives and you probably won't forget how it goes.</p>
+
+<h4>
+<a name="but-html-validation" class="anchor" href="#but-html-validation"><span class="octicon octicon-link"></span></a>But HTML Validation?!</h4>
+
+<p>You probably understand why <a href="http://wheelcode.blogspot.com/2012/07/html-validation-is-bad.html">HTML validation is considered harmful</a>,
+but your pointy-haired boss still labors under the naive impression that it is a best practice.</p>
+
+<h3>
+<a name="ok-fine-you-can-have-your-data--prefix" class="anchor" href="#ok-fine-you-can-have-your-data--prefix"><span class="octicon octicon-link"></span></a>Ok, fine, you can have your 'data-' prefix</h3>
+
+<div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">data-trigger=</span><span class="s">"true"</span> <span class="na">data-trigger-add=</span><span class="s">"dblclick"</span><span class="nt">&gt;</span>
+...
+<span class="nt">&lt;button</span> <span class="na">data-click=</span><span class="s">"validateHTML"</span><span class="nt">&gt;</span>"be lame"<span class="nt">&lt;/button&gt;</span>
+</pre></div>
+
+<h4>
+<a name="but-old-ie" class="anchor" href="#but-old-ie"><span class="octicon octicon-link"></span></a>But Old IE?!?</h4>
+
+<p>You aren't ready to abandon the poor saps still using ancient versions of IE.
+Sure, Google stopped supporting them, but you aren't Google.</p>
+
+<h4>
+<a name="can-do" class="anchor" href="#can-do"><span class="octicon octicon-link"></span></a>Can do.</h4>
+
+<p>Just use jQuery (of course) and this <a href="https://raw.github.com/nbubna/trigger/master/src/trigger.old.js">tiny extension</a>:</p>
+
+<div class="highlight"><pre><span class="c">&lt;!--[if lt IE 9]&gt;</span>
+<span class="c">  &lt;script src="../src/trigger.old.js"&gt;&lt;/script&gt;</span>
+<span class="c">&lt;![endif]--&gt;</span>
+</pre></div>
+
+<h4>
+<a name="another-small-extension" class="anchor" href="#another-small-extension"><span class="octicon octicon-link"></span></a>Another Small Extension</h4>
+
+<p>If you see yourself manually using trigger instead of always letting browser events
+serve as triggers and also happen to be fond of jQuery, <a href="https://raw.github.com/nbubna/trigger/master/src/jquery.trigger.js">jquery.trigger.js</a>
+allows you to do <code>$('#foo').trigger('foo:squish#gooey');</code> instead of
+<code>trigger($('#foo')[0], 'foo:squish#gooey');</code>.</p>
+
+<h4>
+<a name="short-jquery-version---for-those-who-dont-need-all-the-features" class="anchor" href="#short-jquery-version---for-those-who-dont-need-all-the-features"><span class="octicon octicon-link"></span></a>Short jQuery Version - For Those Who Don't Need All The Features</h4>
+
+<div class="highlight"><pre><span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">$el</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">).</span><span class="nx">closest</span><span class="p">(</span><span class="s1">'[click]'</span><span class="p">),</span>
+      <span class="nx">events</span> <span class="o">=</span> <span class="nx">$el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">'click'</span><span class="p">)</span> <span class="o">||</span> <span class="s1">''</span><span class="p">;</span>
+  <span class="nx">events</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">).</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">$el</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">event</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">$</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">).</span><span class="nx">is</span><span class="p">(</span><span class="s1">'[type=radio],[type=checkbox]'</span><span class="p">))</span> <span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+  <span class="p">});</span>
+<span class="p">});</span>
+</pre></div>
+
+<h4>
+<a name="mini-example-just-for-fun" class="anchor" href="#mini-example-just-for-fun"><span class="octicon octicon-link"></span></a>Mini-Example, Just For Fun</h4>
+
+<div class="highlight"><pre><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"#dungeonPlunge"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"dice"</span> <span class="na">name=</span><span class="s">"roll"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;button</span> <span class="na">click=</span><span class="s">"move#up nextPlayer"</span><span class="nt">&gt;</span>Climb<span class="nt">&lt;/button&gt;</span>  
+  <span class="nt">&lt;button</span> <span class="na">click=</span><span class="s">"move#down nextPlayer"</span><span class="nt">&gt;</span>Slide<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+</pre></div>
+
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">game</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">'#dungeonPlunge'</span><span class="p">);</span>
+<span class="nx">game</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'nextPlayer'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">player</span> <span class="o">=</span> <span class="nx">player</span><span class="p">.</span><span class="nx">next</span><span class="p">;</span>
+<span class="p">});</span>
+<span class="nx">game</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'move'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">distance</span> <span class="o">=</span> <span class="nx">game</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">'[name=roll]'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">up</span><span class="p">)</span> <span class="nx">player</span><span class="p">.</span><span class="nx">climb</span><span class="p">(</span><span class="nx">distance</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">down</span><span class="p">)</span> <span class="nx">player</span><span class="p">.</span><span class="nx">slide</span><span class="p">(</span><span class="nx">distance</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">player</span><span class="p">.</span><span class="nx">hasWon</span><span class="p">())</span> <span class="nx">e</span><span class="p">.</span><span class="nx">stopSequence</span><span class="p">();</span><span class="c1">//blocks nextPlayer event</span>
+<span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="advanced-details" class="anchor" href="#advanced-details"><span class="octicon octicon-link"></span></a>Advanced Details</h3>
+
+<h5>
+<a name="click-ish-secrets" class="anchor" href="#click-ish-secrets"><span class="octicon octicon-link"></span></a>'click'-ish secrets</h5>
+
+<ul>
+<li>Clicks are ignored if their target was a user-editable field (e.g. textarea) that did not
+have a click attribute itself, but was a child of an element that did have one.</li>
+<li>Enter keyups (keyCode:13) are treated as clicks if their target lacks a "native response"
+to such events (e.g. in a textarea, it adds a new line, or on a link, it causes a click).
+The exception being if such an element has a <code>keyup</code> or <code>key-enter</code> attribute declared on it.</li>
+<li>When a click is used by trigger.js, it will automatically prevent the original event's
+default behavior, except in the case of radio buttons and checkboxes. The assumption is
+that the default behavior is replaced by the declared event sequence.</li>
+</ul><h5>
+<a name="trigger_special" class="anchor" href="#trigger_special"><span class="octicon octicon-link"></span></a>trigger._.special</h5>
+
+<p>This extension hook provides you the opportunity to change event types, with some particular
+aid for tweaking events that have a 'which' or 'keyCode' important to you. Here's an example:</p>
+
+<div class="highlight"><pre><span class="nt">&lt;div</span> <span class="na">tabIndex=</span><span class="s">"0"</span> <span class="na">key-del=</span><span class="s">"delete"</span> <span class="na">click=</span><span class="s">"edit"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;span&gt;</span>Nathan Bubna<span class="nt">&lt;/span&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">key-esc=</span><span class="s">"cancel"</span> <span class="na">key-enter=</span><span class="s">"save"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+</pre></div>
+
+<div class="highlight"><pre><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">trigger</span><span class="p">.</span><span class="nx">_</span><span class="p">.</span><span class="nx">special</span><span class="p">,</span> <span class="p">{</span>
+  <span class="nx">keyup27</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span> <span class="k">return</span> <span class="s1">'key-esc'</span><span class="p">;</span> <span class="p">},</span>
+  <span class="nx">keyup46</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span> <span class="k">return</span> <span class="s1">'key-del'</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>Note: trigger.js already listens for <code>keyup</code> and <code>click</code> events. For other special events,
+like keydown or dblclick, remember to do <code>&lt;html trigger-add="keydown"&gt;</code> or the like.</p>
+
+<p>TODO: add more advanced details...</p>
+
+<h4>
+<a name="release-history" class="anchor" href="#release-history"><span class="octicon octicon-link"></span></a>Release History</h4>
+
+<ul>
+<li>2010-04-02 v0.1 (internal)</li>
+<li>2012-09-13 v0.3 (internal)</li>
+<li>2013-05-03 v0.9.0 (public) - First GitHub release</li>
+<li>2013-05-16 v1.0.0 (public) - tests and feature completeness</li>
+<li>2013-05-21 v1.1.0 (public) - declarative configuration</li>
+<li>2013-05-22 v1.1.1 (public) - fix build problem</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Trigger maintained by <a href="https://github.com/nbubna">nbubna</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
